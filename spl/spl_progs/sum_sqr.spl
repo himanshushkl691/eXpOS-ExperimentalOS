@@ -1,0 +1,9 @@
+alias i R0;
+i = 1;
+alias ans R1;
+ans = 0;
+while(i <= 20) do
+	ans = ans + (i * i);
+	i = i + 1;
+endwhile;
+print ans;
