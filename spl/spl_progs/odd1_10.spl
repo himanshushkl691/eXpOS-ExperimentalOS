@@ -1,0 +1,8 @@
+alias ctr R0;
+ctr = 0;
+while(ctr <= 10) do
+	if(ctr % 2 != 0) then
+		breakpoint;
+	endif;
+	ctr = ctr + 1;
+endwhile;
