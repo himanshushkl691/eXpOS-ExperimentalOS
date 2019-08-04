@@ -1,25 +1,50 @@
-//load INIT program from disk to memory in disk
-//INIT program is stored in 7-8 block and in memory
-//INIT program is loaded into 65-66 pages
-//alias PTBR R0;
-//alias PTLR R1;
-//alias SP R2;
-loadi(65,7);
+//load library
+loadi(63,13);
+loadi(64,14);
+
+//load INIT program
+loadi(65,7); 
 loadi(66,8);
-//load INT 10 module from disk to memory
-//22-23 pages
-loadi(22,35);
+
+//load INT 10 module
+loadi(22,35); 
 loadi(23,36);
+
+//load exception handler
 loadi(2,15);
 loadi(3,16);
+
 PTBR = PAGE_TABLE_BASE;
-PTLR = 9;
+PTLR = 10;
+
+//Library (R = 0,V = 1,W = 0,D = 0)
+[PTBR + 0] = 63;
+[PTBR + 1] = "0100";
+[PTBR + 2] = 64;
+[PTBR + 3] = "0100";
+
+//Heap (R = 0,V = 1,W = 1,D = 0)
+[PTBR + 4] = 78;
+[PTBR + 5] = "0110";
+[PTBR + 6] = 79;
+[PTBR + 7] = "0110";
+
+//Code (R = 0,V = 1,W = 0,D = 0)
 [PTBR + 8] = 65;
 [PTBR + 9] = "0100";
 [PTBR + 10] = 66;
 [PTBR + 11] = "0100";
+[PTBR + 12] = -1;
+[PTBR + 13] = "0000";
+[PTBR + 14] = -1;
+[PTBR + 15] = "0000";
+
+//Stack (R = 0,V = 1,W = 1,D = 0)
 [PTBR + 16] = 76;
 [PTBR + 17] = "0110";
-[76*512] = 4 * 512;
+[PTBR + 18] = 77;
+[PTBR + 19] = "0110";
+
+[76*512] = [65 * 512 + 1];
 SP = 8 * 512;
 ireturn;
