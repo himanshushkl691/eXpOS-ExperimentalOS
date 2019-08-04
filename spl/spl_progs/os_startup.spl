@@ -14,6 +14,10 @@ loadi(23,36);
 loadi(2,15);
 loadi(3,16);
 
+//load timer interrupt
+loadi(4,17);
+loadi(5,18);
+
 PTBR = PAGE_TABLE_BASE;
 PTLR = 10;
 
