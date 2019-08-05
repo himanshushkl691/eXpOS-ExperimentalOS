@@ -51,4 +51,8 @@ PTLR = 10;
 
 [76*512] = [65 * 512 + 1];
 SP = 8 * 512;
+
+[PROCESS_TABLE + 11] = 80;	//set user area page number
+[PROCESS_TABLE + 1] = 0;	//set pid of process as index of process table
+[SYSTEM_STATUS_TABLE + 1] = 0; 	//pid of active process
 ireturn;

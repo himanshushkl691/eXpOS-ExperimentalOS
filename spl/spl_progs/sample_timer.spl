@@ -1,2 +1,10 @@
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 13] = SP;
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] * 512 - 1;
+backup;
 print "TIMER";
+alias proc R0;
+proc = [SYSTEM_STATUS_TABLE + 1];
+print proc;
+restore;
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 13];
 ireturn;
