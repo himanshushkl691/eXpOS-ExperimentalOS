@@ -6,14 +6,31 @@
 0
 0
 0
-MOV R2,5
+MOV R2,20
 MOV R1,1
 MOV R0,1
 GT R1,R2
-JNZ R1,2078
-MOV R1,R0
-MUL R1,R1
-BRKP
+JNZ R1,2112
+PUSH R0
+PUSH R1
+PUSH R2
+MOV R2,R0	//word to be printed
+MOV R0,5	//system call number
+MOV R1,-2	//file descriptor
+PUSH R0		//syscall
+PUSH R1		//file descriptor
+PUSH R2		//word
+PUSH R3		//third argument
+PUSH R4		//for return value
+INT 7
+POP R4
+POP R3
+POP R2
+POP R1
+POP R0
+POP R2
+POP R1
+POP R0
 INR R0
 MOV R1,R0
 JMP 2062
