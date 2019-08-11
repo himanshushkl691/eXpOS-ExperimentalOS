@@ -22,6 +22,10 @@ loadi(3,16);
 loadi(4,17);
 loadi(5,18);
 
+//load idle program
+loadi(69,11);
+loadi(70,12);
+
 PTBR = PAGE_TABLE_BASE;
 PTLR = 10;
 

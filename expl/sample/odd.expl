@@ -1,0 +1,17 @@
+int main()
+{
+decl
+	int ctr,retval;
+enddecl
+begin
+	ctr = 1;
+	while (ctr <= 100) do
+		if ((ctr % 2) != 0)
+		then
+			retval = exposcall("Write",-2,ctr);
+		endif;
+		ctr = ctr + 1;
+	endwhile;
+	return 0;
+end
+}
