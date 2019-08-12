@@ -29,6 +29,37 @@ loadi(70,12);
 PTBR = PAGE_TABLE_BASE;
 PTLR = 10;
 
+//Library
+[PTBR + 0] = -1;
+[PTBR + 1] = "0000";
+[PTBR + 2] = -1;
+[PTBR + 3] = "0000";
+
+//Heap
+[PTBR + 4] = -1;
+[PTBR + 5] = "0000";
+[PTBR + 6] = -1;
+[PTBR + 7] = "0000";
+
+//Code
+[PTBR + 8] = 69;
+[PTBR + 9] = "0100";
+[PTBR + 10] = 70;
+[PTBR + 11] = "0100";
+[PTBR + 12] = -1;
+[PTBR + 13] = "0000";
+[PTBR + 14] = -1;
+[PTBR + 15] = "0000";
+
+//Stack
+[PTBR + 16] = 81;
+[PTBR + 17] = "0110";
+[PTBR + 18] = -1;
+[PTBR + 19] = "0000";
+
+PTBR = PAGE_TABLE_BASE + 20;
+PTLR = 10;
+
 //Library (R = 0,V = 1,W = 0,D = 0)
 [PTBR + 0] = 63;
 [PTBR + 1] = "0100";
@@ -56,11 +87,29 @@ PTLR = 10;
 [PTBR + 17] = "0110";
 [PTBR + 18] = 77;
 [PTBR + 19] = "0110";
+PTBR = PTBR - 20;
 
-[76*512] = [65 * 512 + 1];
+[PROCESS_TABLE + 1] = 0;
+[PROCESS_TABLE + 4] = CREATED;
+[PROCESS_TABLE + 11] = 82;
+[PROCESS_TABLE + 13] = 8*512;
+[PROCESS_TABLE + 12] = 0;
+[PROCESS_TABLE + 14] = PAGE_TABLE_BASE;
+[PROCESS_TABLE + 15] = 10;
+[81*512] = [69*512+1];
+
+[PROCESS_TABLE + 16 + 1] = 1;
+[PROCESS_TABLE + 16 + 4] = RUNNING;
+[PROCESS_TABLE + 16 + 11] = 80;	//set user area page number
+[PROCESS_TABLE + 16 + 13] = 8*512;
+[PROCESS_TABLE + 16 + 12] = 0;
+[PROCESS_TABLE + 16 + 14] = PAGE_TABLE_BASE + 20;
+[PROCESS_TABLE + 16 + 15] = 10;
+[76*512] = [65*512+1];
+
+PTBR = PAGE_TABLE_BASE + 20;
+PTLR = 10;
 SP = 8 * 512;
 
-[PROCESS_TABLE + 11] = 80;	//set user area page number
-[PROCESS_TABLE + 1] = 0;	//set pid of process as index of process table
-[SYSTEM_STATUS_TABLE + 1] = 0; 	//pid of active process
+[SYSTEM_STATUS_TABLE + 1] = 1; 	//pid of active process
 ireturn;
