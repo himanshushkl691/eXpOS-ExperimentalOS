@@ -30,10 +30,10 @@ PTBR = PAGE_TABLE_BASE;
 PTLR = 10;
 
 //Library
-[PTBR + 0] = -1;
-[PTBR + 1] = "0000";
-[PTBR + 2] = -1;
-[PTBR + 3] = "0000";
+[PTBR + 0] = 63;
+[PTBR + 1] = "0100";
+[PTBR + 2] = 64;
+[PTBR + 3] = "0100";
 
 //Heap
 [PTBR + 4] = -1;
