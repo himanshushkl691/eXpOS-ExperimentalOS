@@ -1,3 +1,7 @@
+//load MODULE 5
+loadi(50,63);
+loadi(51,64);
+
 //load MODULE 7
 loadi(54,67);
 loadi(55,68);

@@ -1,0 +1,52 @@
+//SCHEDULER
+alias current_pid R0;
+current_pid = [SYSTEM_STATUS_TABLE + 1];
+
+multipush(BP);
+
+alias process_table_entry R1;
+process_table_entry = PROCESS_TABLE+(current_pid*16);
+
+[process_table_entry+12]=SP%512;	//kernel stack pointer
+[process_table_entry+14]=PTBR;		//save PTBR
+[process_table_entry+15]=PTLR;		//save PTLR
+
+alias newPID R2;
+newPID=0;		//by default idle
+alias tempPID R3;
+tempPID=current_pid+1;
+//------------
+
+while(tempPID<16) do
+	if(([PROCESS_TABLE+(tempPID*16)+4]==READY)||([PROCESS_TABLE+(tempPID*16)+4]==CREATED)) then
+		newPID=tempPID;
+		break;
+	endif;
+	tempPID=tempPID+1;
+endwhile;
+
+//------------
+
+//------------
+
+alias new_pt R4;
+new_pt=PROCESS_TABLE+(newPID*16);
+//kernel stack of restored process
+SP=[new_pt+11]*512+[new_pt+12];
+PTBR=[new_pt+14];
+PTLR=[new_pt+15];
+[SYSTEM_STATUS_TABLE+1]=newPID;
+
+//------------
+
+if([new_pt+4]==CREATED) then
+	SP=[new_pt+13];
+	[new_pt+4]=RUNNING;
+	[new_pt+9]=0;
+	ireturn;
+endif;
+
+[new_pt+4]=RUNNING;
+multipop(BP);
+
+return;

@@ -1,0 +1,27 @@
+//save user stack pointer
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 13] = SP;
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 11] * 512 - 1;
+
+//save context
+backup;
+
+//set state of current process to ready from running
+[PROCESS_TABLE+([SYSTEM_STATUS_TABLE+1]*16)+4]=READY;
+alias i R0;
+i = 0;
+//tracks how long process is in memory/swap
+while(i<16) do
+	if([PROCESS_TABLE+(i*16)+4]!=TERMINATED) then
+		[PROCESS_TABLE+(i*16)]=[PROCESS_TABLE+(i*16)]+1;
+	endif;
+	i=i+1;
+endwhile;
+
+//call scheduler
+call MOD_5;
+
+restore;
+SP = [PROCESS_TABLE+([SYSTEM_STATUS_TABLE+1]*16)+13];
+[PROCESS_TABLE+([SYSTEM_STATUS_TABLE+1]*16)+9] = 0;
+
+ireturn;
