@@ -1,6 +1,6 @@
 load --os $HOME/Desktop/myexpos/spl/spl_progs/final_os_startup.xsm
-load --init $HOME/Desktop/myexpos/expl/sample/odd.xsm
-load --exec $HOME/Desktop/myexpos/expl/sample/even.xsm
+load --init $HOME/Desktop/myexpos/expl/sample/even.xsm
+load --exec $HOME/Desktop/myexpos/expl/sample/odd.xsm
 load --idle $HOME/Desktop/myexpos/expl/sample/idle.xsm
 load --exhandler $HOME/Desktop/myexpos/spl/spl_progs/haltprog.xsm
 load --library $HOME/Desktop/myexpos/expl/library.lib
