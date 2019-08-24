@@ -14,6 +14,14 @@ loadi(23,36);
 loadi(16,29);
 loadi(17,30);
 
+//load MOD_0
+loadi(40,53);
+loadi(41,54);
+
+//load MOD_4
+loadi(48,61);
+loadi(49,62);
+
 //load timer interrupt
 loadi(4,17);
 loadi(5,18);
@@ -132,4 +140,6 @@ i = 32;
 [PROCESS_TABLE + i + 15] = 10;
 [84 * 512] = [83 * 512 + 1];
 
+//initially terminal is free
+[TERMINAL_STATUS_TABLE]=0;
 return;

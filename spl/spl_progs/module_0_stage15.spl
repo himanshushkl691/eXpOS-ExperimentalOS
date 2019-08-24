@@ -1,0 +1,41 @@
+//-------------DEVICE MANAGER MODULE-----------
+alias funcNum R1;
+alias currPID R2;
+
+//------------ACQUIRING TERMINAL---------
+if(funcNum == 8) then
+	
+	//-------wait till terminal is released------
+	while(([TERMINAL_STATUS_TABLE]) == 1) do
+		[PROCESS_TABLE+(currPID*16)+4]=WAIT_TERMINAL;
+		multipush(R0,R1,R2,R3,R4);
+		call MOD_5;			//call scheduler
+		multipop(R0,R1,R2,R3,R4);
+	endwhile;
+	//------------------------------------------
+
+	[TERMINAL_STATUS_TABLE]=1;		//lock terminal
+	[TERMINAL_STATUS_TABLE+1]=currPID;	//set PID field in terminal_status_table
+	return;
+endif;
+
+//----------RELEASING TERMINAL----------
+if(funcNum == 9) then
+	if(currPID != [TERMINAL_STATUS_TABLE+1]) then
+		R0 = -1;
+		return;
+	else
+		[TERMINAL_STATUS_TABLE]=0;	//terminal released
+		alias i R4;
+		i = 0;
+		//wake up all process having state WAIT_TERMINAL
+		while(i < 16) do
+			if([PROCESS_TABLE+(i*16)+4] == WAIT_TERMINAL) then
+				[PROCESS_TABLE+(i*16)+4]=READY;
+			endif;
+			i = i + 1;
+		endwhile;
+		R0 = 0;
+		return;
+	endif;
+endif;

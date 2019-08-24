@@ -1,0 +1,32 @@
+//------------------------DEVICE MANAGER MODULE------------------
+
+//-----Terminal Write function-----
+alias funcNum R1;
+alias currPID R2;
+//R1 --> function Name
+//R2 --> PID of curr_proc
+//R3 --> content to be written
+
+if(funcNum == 3) then
+
+	//-------CALLING ACQUIRE TERMINAL------
+	backup;
+	R1 = 8;	//set R1 to 8 for acquiring terminal
+	R2 = [SYSTEM_STATUS_TABLE + 1];	//set R2 to PID of curr_proc
+	call MOD_0;	//call resource manager module
+	restore;
+	print R3;
+	//------------------------------------
+
+	//------CALLING RELEASE TERMINAL-----
+	backup;
+	R1 = 9;	//set R1 to 9 for releasing terminal
+	R2 = [SYSTEM_STATUS_TABLE+1];
+	call MOD_0;	//call resource manager module
+	restore;
+	//-----------------------------------
+	return;
+else
+	return;
+endif;
+//--------------------------------

@@ -48,5 +48,4 @@ endif;
 
 [new_pt+4]=RUNNING;
 multipop(BP);
-
 return;
