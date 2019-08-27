@@ -5,6 +5,7 @@ decl
 enddecl
 begin
 	a = 1;
+	breakpoint;
 	while (1 == 1) do
 		a = 1;
 	endwhile;

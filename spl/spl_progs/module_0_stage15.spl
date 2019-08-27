@@ -1,4 +1,4 @@
-//-------------DEVICE MANAGER MODULE-----------
+//-------------RESOURCE MANAGER MODULE-----------
 alias funcNum R1;
 alias currPID R2;
 
@@ -8,9 +8,9 @@ if(funcNum == 8) then
 	//-------wait till terminal is released------
 	while(([TERMINAL_STATUS_TABLE]) == 1) do
 		[PROCESS_TABLE+(currPID*16)+4]=WAIT_TERMINAL;
-		multipush(R0,R1,R2,R3,R4);
+		backup;
 		call MOD_5;			//call scheduler
-		multipop(R0,R1,R2,R3,R4);
+		restore;
 	endwhile;
 	//------------------------------------------
 

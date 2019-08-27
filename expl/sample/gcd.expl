@@ -1,0 +1,30 @@
+int main(){
+decl
+	int n,m,r,ret;
+	str mystr;
+enddecl
+begin
+	mystr = "Enter first number";
+	ret = exposcall("Write",-2,mystr);
+	ret = exposcall("Read",-1,n);
+	mystr = "Enter second number";
+	ret = exposcall("Write",-2,mystr);
+	ret = exposcall("Read",-1,m);
+	if(n > m) then
+		r = n;
+		n = m;
+		m = r;
+	endif;
+	if(n == 0) then
+		ret = exposcall("Write",-2,m);
+	else
+		while(n != 0) do
+			r = m % n;
+			m = n;
+			n = r;
+		endwhile;
+		ret = exposcall("Write",-2,m);
+	endif;
+	return 0;
+end
+}

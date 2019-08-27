@@ -10,6 +10,10 @@ loadi(66,8);
 loadi(22,35);
 loadi(23,36);
 
+//load INT_6 module
+loadi(14,27);
+loadi(15,28);
+
 //load INT_7 module
 loadi(16,29);
 loadi(17,30);
@@ -30,8 +34,12 @@ loadi(5,18);
 loadi(2,15);
 loadi(3,16);
 
+//load console interrupt
+loadi(8,21);
+loadi(9,22);
+
 //load exec program
-loadi(83,69);
+//loadi(83,69);
 
 alias i R0;
 
@@ -91,54 +99,54 @@ i = 16;
 [76 * 512] = [65 * 512 + 1];
 
 //---------------------EXEC Program--------------------------
-PTBR = PAGE_TABLE_BASE;
-PTLR = 10;
+//PTBR = PAGE_TABLE_BASE;
+//PTLR = 10;
 
-i = 40;
+//i = 40;
 //library
-[PTBR + i + 0] = 63;
-[PTBR + i + 1] = "0100";
-[PTBR + i + 2] = 64;
-[PTBR + i + 3] = "0100";
+//[PTBR + i + 0] = 63;
+//[PTBR + i + 1] = "0100";
+//[PTBR + i + 2] = 64;
+//[PTBR + i + 3] = "0100";
 
 //heap
-[PTBR + i + 4] = 85;
-[PTBR + i + 5] = "0110";
-[PTBR + i + 6] = -1;
-[PTBR + i + 7] = "0000";
+//[PTBR + i + 4] = 85;
+//[PTBR + i + 5] = "0110";
+//[PTBR + i + 6] = -1;
+//[PTBR + i + 7] = "0000";
 
 //code
-[PTBR + i + 8] = 83;
-[PTBR + i + 9] = "0100";
-[PTBR + i + 10] = -1;
-[PTBR + i + 11] = "0000";
-[PTBR + i + 12] = -1;
-[PTBR + i + 13] = "0000";
-[PTBR + i + 14] = -1;
-[PTBR + i + 15] = "0000";
+//[PTBR + i + 8] = 83;
+//[PTBR + i + 9] = "0100";
+//[PTBR + i + 10] = -1;
+//[PTBR + i + 11] = "0000";
+//[PTBR + i + 12] = -1;
+//[PTBR + i + 13] = "0000";
+//[PTBR + i + 14] = -1;
+//[PTBR + i + 15] = "0000";
 
 //stack
-[PTBR + i + 16] = 84;
-[PTBR + i + 17] = "0110";
-[PTBR + i + 18] = -1;
-[PTBR + i + 19] = "0000";
+//[PTBR + i + 16] = 84;
+//[PTBR + i + 17] = "0110";
+//[PTBR + i + 18] = -1;
+//[PTBR + i + 19] = "0000";
 
-i = 32;
+//i = 32;
 //pid
-[PROCESS_TABLE + i + 1] = 2;
+//[PROCESS_TABLE + i + 1] = 2;
 //status
-[PROCESS_TABLE + i + 4] = CREATED;
+//[PROCESS_TABLE + i + 4] = CREATED;
 //user area page number
-[PROCESS_TABLE + i + 11] = 86;
+//[PROCESS_TABLE + i + 11] = 86;
 //user stack pointer
-[PROCESS_TABLE + i + 13] = 8*512;
+//[PROCESS_TABLE + i + 13] = 8*512;
 //kernel stack pointer
-[PROCESS_TABLE + i + 12] = 0;
+//[PROCESS_TABLE + i + 12] = 0;
 //ptbr
-[PROCESS_TABLE + i + 14] = (PAGE_TABLE_BASE + 40);
+//[PROCESS_TABLE + i + 14] = (PAGE_TABLE_BASE + 40);
 //ptlr
-[PROCESS_TABLE + i + 15] = 10;
-[84 * 512] = [83 * 512 + 1];
+//[PROCESS_TABLE + i + 15] = 10;
+//[84 * 512] = [83 * 512 + 1];
 
 //initially terminal is free
 [TERMINAL_STATUS_TABLE]=0;

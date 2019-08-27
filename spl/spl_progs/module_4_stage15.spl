@@ -1,12 +1,11 @@
 //------------------------DEVICE MANAGER MODULE------------------
-
-//-----Terminal Write function-----
 alias funcNum R1;
 alias currPID R2;
 //R1 --> function Name
 //R2 --> PID of curr_proc
-//R3 --> content to be written
+//R3 --> content/address
 
+//-----Terminal Write function-----
 if(funcNum == 3) then
 
 	//-------CALLING ACQUIRE TERMINAL------
@@ -26,7 +25,31 @@ if(funcNum == 3) then
 	restore;
 	//-----------------------------------
 	return;
-else
-	return;
 endif;
 //--------------------------------
+
+//-----Terminal Read function------
+if(funcNum == 4) then
+
+	//------CALLING ACQUIRE TERMINAL-------
+	backup;
+	R1 = 8;
+	R2 = [SYSTEM_STATUS_TABLE + 1];
+	call MOD_0;
+	restore;
+	read;
+	[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 4] = WAIT_TERMINAL;
+	//-------------------------------------
+
+	//-----CONTEXT SWITCH------------------
+	multipush(R0,R1,R2,R3,R4,R5,R6);
+	call MOD_5;
+	multipop(R0,R1,R2,R3,R4,R5,R6);
+	[[PTBR + 2 * ((R3) / 512)] * 512 + ((R3) % 512)] = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 8];
+	//-------------------------------------
+	return;
+endif;
+return;
+//---------------------------------
+
+//---------------------------------------------------------------
