@@ -1,0 +1,61 @@
+//---------------------MEMORY MANAGER MODULE---------------------
+alias funcNum R1;
+alias pageNum R2;
+
+//----------Get Free Page(Final Version)----------
+if(funcNum == GET_FREE_PAGE) then
+	//increment wait_mem_count
+	[SYSTEM_STATUS_TABLE + 3] = [SYSTEM_STATUS_TABLE + 3] + 1;
+	//wait for memory
+	while ([SYSTEM_STATUS_TABLE + 2] == 0) do
+		[PROCESS_TABLE+([SYSTEM_STATUS_TABLE+1]*16)+4]=WAIT_MEM;
+		//call scheduler
+		backup;
+		call MOD_5;
+		restore;
+	endwhile;
+	//decrement wait_mem_count
+	[SYSTEM_STATUS_TABLE + 3] = [SYSTEM_STATUS_TABLE + 3] - 1;
+	//MEM_FREE_COUNT
+	[SYSTEM_STATUS_TABLE + 2] = [SYSTEM_STATUS_TABLE + 2] - 1;
+
+	alias i R3;
+	i = 0;
+	while(i < MAX_MEM_PAGE) do
+		if([MEMORY_FREE_LIST + i] == 0) then
+			[MEMORY_FREE_LIST + i] = 1;
+			break;
+		endif;
+		i = i + 1;
+	endwhile;
+	//return acquired page_number
+	R0 = i;
+	return;
+endif;
+//---------------------------------
+
+//----------Release Page(Final Version)-----------
+if(funcNum == RELEASE_PAGE) then
+	
+	[MEMORY_FREE_LIST + pageNum] = [MEMORY_FREE_LIST + pageNum] - 1;
+	//if mem_free_list+page_num becomes zero increment mem_free_count
+	
+	if([MEMORY_FREE_LIST + pageNum] == 0) then
+		[SYSTEM_STATUS_TABLE + 2] = [SYSTEM_STATUS_TABLE + 2] + 1;
+
+		//wake up all process with status wait_mem
+		alias i R3;
+		i = 0;
+		while(i < 16) do
+			if([PROCESS_TABLE+(i*16)+4] == WAIT_MEM) then
+				[PROCESS_TABLE+(i*16)+4] = READY;
+			endif;
+			i = i + 1;
+		endwhile;
+	endif;
+	return;
+endif;
+//---------------------------------
+
+return;
+//---------------------------------------------------------------

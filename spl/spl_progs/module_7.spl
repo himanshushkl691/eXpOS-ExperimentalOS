@@ -6,10 +6,6 @@ loadi(64,14);
 loadi(65,7);
 loadi(66,8);
 
-//load INT_10 module
-loadi(22,35);
-loadi(23,36);
-
 //load INT_6 module
 loadi(14,27);
 loadi(15,28);
@@ -18,9 +14,25 @@ loadi(15,28);
 loadi(16,29);
 loadi(17,30);
 
+//load INT_9 module
+loadi(20,33);
+loadi(21,34);
+
+//load INT_10 module
+loadi(22,35);
+loadi(23,36);
+
 //load MOD_0
 loadi(40,53);
 loadi(41,54);
+
+//load MOD_1
+loadi(42,55);
+loadi(43,56);
+
+//load MOD_2
+loadi(44,57);
+loadi(45,58);
 
 //load MOD_4
 loadi(48,61);
@@ -38,10 +50,15 @@ loadi(3,16);
 loadi(8,21);
 loadi(9,22);
 
+//load inode table
+loadi(59,3);
+loadi(60,4);
+
 //load exec program
 //loadi(83,69);
 
 alias i R0;
+alias cnt R1;
 
 //initialize state of {0..16}/{0,1,2} entries
 i = 0;
@@ -49,6 +66,21 @@ while(i < 16) do
 	[PROCESS_TABLE+(i*16)+4] = TERMINATED;
 	i = i + 1;
 endwhile;
+
+i = 0;
+cnt = 0;
+while(i < 128) do
+	if(i < 83) then
+		[MEMORY_FREE_LIST + i] = 1;
+	else
+		[MEMORY_FREE_LIST + i] = 0;
+		cnt = cnt + 1;
+	endif;
+	i = i + 1;
+endwhile;
+
+//mem_free_count
+[SYSTEM_STATUS_TABLE + 2] = cnt;
 
 //-----------------INIT Program---------------------
 PTBR = PAGE_TABLE_BASE;
@@ -150,4 +182,7 @@ i = 16;
 
 //initially terminal is free
 [TERMINAL_STATUS_TABLE]=0;
+
+//reset WAIT_MEM_COUNT
+[SYSTEM_STATUS_TABLE + 3] = 0;
 return;
