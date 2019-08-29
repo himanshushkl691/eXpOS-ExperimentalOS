@@ -1,0 +1,15 @@
+int main(){
+	decl
+		str mystr;
+		int ret; 
+	enddecl
+	begin
+		ret = exposcall("Read",-1,mystr);
+		ret = exposcall("Exec",mystr);
+		if(ret == -1) then
+			mystr = "Could not execute!";
+			ret = exposcall("Write",-2,mystr);
+		endif;
+		return 0;
+	end
+}
