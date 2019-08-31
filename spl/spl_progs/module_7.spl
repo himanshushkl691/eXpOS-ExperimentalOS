@@ -58,6 +58,9 @@ loadi(7,20);
 loadi(59,3);
 loadi(60,4);
 
+//load disk free list
+loadi(61,2);
+
 //load exec program
 //loadi(83,69);
 

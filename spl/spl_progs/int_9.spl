@@ -99,14 +99,14 @@ restore;
 //----------------------------
 
 //-----validate heap entries----
-//stack 1
+//heap 1
 backup;
 R1 = 1;
 call MOD_2;
 [PTBR + 4] = R0;
 [PTBR + 5] = "0110";
 restore;
-//stack 2
+//heap 2
 backup;
 R1 = 1;
 call MOD_2;

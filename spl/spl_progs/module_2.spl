@@ -28,7 +28,7 @@ if(funcNum == GET_FREE_PAGE) then
 		endif;
 		i = i + 1;
 	endwhile;
-	//return acquired page_number
+	//return free page_number
 	R0 = i;
 	return;
 endif;
@@ -36,7 +36,6 @@ endif;
 
 //----------Release Page(Final Version)-----------
 if(funcNum == RELEASE_PAGE) then
-	
 	[MEMORY_FREE_LIST + pageNum] = [MEMORY_FREE_LIST + pageNum] - 1;
 	//if mem_free_list+page_num becomes zero increment mem_free_count
 	
@@ -53,6 +52,47 @@ if(funcNum == RELEASE_PAGE) then
 			i = i + 1;
 		endwhile;
 	endif;
+	return;
+endif;
+//---------------------------------
+
+//---------Get Code Page-----------
+if(funcNum == GET_CODE_PAGE) then
+	alias block_num R2;
+	alias i R3;
+	alias disk_entry R4;
+	i = 0;
+	while(i < 16) do
+		disk_entry = DISK_MAP_TABLE + (10 * i);
+		alias page R5;
+		page = 4;
+		while(page < 8) do
+			if(([disk_entry + page] == block_num) && ([PAGE_TABLE_BASE + (i * 20) + (2 * page)] != -1)) then
+				R0 = [PAGE_TABLE_BASE + (i * 20) + (2 * page)];		//return page_number
+				[MEMORY_FREE_LIST + R0] = [MEMORY_FREE_LIST + R0] + 1;	//number of processes using this page
+				return;
+			endif;
+			page = page + 1;
+		endwhile;
+		i = i + 1;
+	endwhile;
+	//if page is not in memory
+	R1 = GET_FREE_PAGE;
+	call MOD_2;
+	//load(page_num,block_num)
+	R1 = DISK_LOAD;			//funcNum
+	R2 = [SYSTEM_STATUS_TABLE + 1];	//currPID
+	R3 = R0;			//page number in which block_num content is loaded
+	R4 = block_num;			//block which we want to load
+	call MOD_4;			//device manager
+	return;
+endif;
+//---------------------------------
+
+//--------RELEASE BLOCK------------
+if(funcNum == RELEASE_BLOCK) then
+	alias block_num R2;
+	[DISK_FREE_LIST + block_num] = [DISK_FREE_LIST + block_num] - 1;
 	return;
 endif;
 //---------------------------------

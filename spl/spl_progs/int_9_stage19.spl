@@ -1,0 +1,164 @@
+//-----------------------INTERRUPT 9 MODULE---------------------
+
+//-------EXEC SYSTEM CALL(9)--------
+
+//switch to kernel stack of current process
+alias userSP R0;
+userSP = SP;
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 13] = SP;
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] * 512 - 1;
+
+//change mode_flag in current_proc's process_table
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 9] = 9;
+
+alias physical_page_number R1;
+alias offset R2;
+alias file_name R3;
+physical_page_number = [PTBR + 2*((userSP - 4)/512)];
+offset = (userSP - 4)%512;
+file_name = [physical_page_number * 512 + offset];
+
+alias i R4;
+alias idx R5;
+i = 1;
+idx = -1;
+
+//dont't search for i = 0 it contains entry for root_file
+while(i < MAX_FILE_NUM) do
+	if(([INODE_TABLE+(i*16)]==EXEC) && ([INODE_TABLE+(i*16)+1]==file_name)) then
+		idx = i;
+		break;
+	endif;
+	i = i + 1;
+endwhile;
+
+if(idx < 0) then
+	SP = userSP;
+	//set mode_flag
+	[PROCESS_TABLE+([SYSTEM_STATUS_TABLE+1]*16)+9]=0;
+	//set ret_val
+	[[PTBR+2*((userSP - 1)/512)]*512 + ((userSP - 1)%512)] = -1;
+	ireturn;
+endif;
+
+alias exitPID R6;
+exitPID = [SYSTEM_STATUS_TABLE+1];
+
+//deallocate resources and pages of current process
+backup;
+R1 = EXIT_PROCESS;
+R2 = exitPID;
+call MOD_1;
+restore;
+
+alias user_area_page_number R7;
+//pid of current will be same as exitPID, pages has been deallocated
+user_area_page_number = [PROCESS_TABLE+(exitPID*16)+11];
+
+//reclaim same page by incrementing memory_free_list entry of user_area_page
+[MEMORY_FREE_LIST+user_area_page_number]=[MEMORY_FREE_LIST+user_area_page_number]+1;
+
+//decrement MEM_FREE_COUNT in system_status_table
+[SYSTEM_STATUS_TABLE+2]=[SYSTEM_STATUS_TABLE+2]-1;
+
+//SP points to kernel_stack of new process
+SP = [PROCESS_TABLE+(exitPID*16)+11]*512 - 1;
+
+//set state of terminated process to RUNNING,new process uses same pid
+[PROCESS_TABLE + (exitPID*16) + 4] = RUNNING;
+
+//set inode_index
+[PROCESS_TABLE + (exitPID*16) + 7] = idx;
+
+//----------PAGE TABLE SETUP-------------
+
+PTBR = PAGE_TABLE_BASE + exitPID * 20;
+//------validate library entries-
+[PTBR + 0] = 63;
+[PTBR + 1] = "0100";
+[PTBR + 2] = 64;
+[PTBR + 3] = "0100";
+//------------------------------
+
+//-----validate stack entries-----
+//stack 1
+backup;
+R1 = 1;
+call MOD_2;
+[PTBR + 16] = R0;
+[PTBR + 17] = "0110";
+restore;
+
+//stack 2
+backup;
+R1 = 1;
+call MOD_2;
+[PTBR + 18] = R0;
+[PTBR + 19] = "0110";
+restore;
+//----------------------------
+
+//-----validate heap entries----
+//heap 1
+[PTBR + 4] = -1;
+[PTBR + 5] = "0000";
+//heap 2
+[PTBR + 6] = -1;
+[PTBR + 7] = "0000";
+//-----------------------------
+
+//------validate code entries-----
+
+//allocate first code page by calling get_code_page function
+alias inode_pos R8;
+inode_pos = INODE_TABLE + (idx * 16);
+if([inode_pos + 8] != -1) then
+backup;
+R1 = GET_CODE_PAGE;	//funcNumber
+R2 = [inode_pos + 8];	//block number
+call MOD_2;		//memory manager
+[PTBR + 8] = R0;
+[PTBR + 9] = "0100";
+restore;
+endif;
+
+//invalidate rest of code pages
+[PTBR + 10] = -1;
+[PTBR + 11] = "0000";
+[PTBR + 12] = -1;
+[PTBR + 13] = "0000";
+[PTBR + 14] = -1;
+[PTBR + 15] = "0000";
+//-----------------------------
+
+//---initl per-process table---
+alias off R9;
+off = 496;
+while(off <= 511) do
+	[user_area_page_number * 512 + off] = -1;
+	off = off + 2;
+endwhile;
+//-----------------------------
+
+//---initl disk_status_table---
+off = 0;
+while(off < 10) do
+	[DISK_MAP_TABLE + (10 * exitPID) + off] = -1;
+	off = off + 1;
+endwhile;
+[DISK_MAP_TABLE + (10 * exitPID) + 4] = [inode_pos + 8];	//map first block
+[DISK_MAP_TABLE + (10 * exitPID) + 5] = [inode_pos + 9];	//map second block
+[DISK_MAP_TABLE + (10 * exitPID) + 6] = [inode_pos + 10];	//map third block
+[DISK_MAP_TABLE + (10 * exitPID) + 7] = [inode_pos + 11];	//map fourth block
+//-----------------------------
+
+//------------------------------------
+
+[[PTBR + 16] * 512] = [[PTBR + 8] * 512 + 1];	//store entry location on top of stack
+SP = 8 * 512;					//userSP
+
+[PROCESS_TABLE + (exitPID*16) + 9] = 0;		//mode_flag to 0 USER
+ireturn;
+//-------------------------------
+
+//--------------------------------------------------------------

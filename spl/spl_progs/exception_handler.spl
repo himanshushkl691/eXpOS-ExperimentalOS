@@ -1,0 +1,73 @@
+//------------------EXCEPTION HANDLER--------------------
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 9] = -1;
+//save SP in UPTR
+alias userSP R0;
+userSP = SP;
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 13] = SP;
+//switch to kernel stack
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] * 512 - 1;
+backup;
+multipush(EIP);
+
+//if cause of exception is illegal instruction
+if(EC == 1) then
+	print "illegal_inst";
+	backup;
+	R1 = EXIT_PROCESS;
+	R2 = [SYSTEM_STATUS_TABLE + 1];
+	call MOD_1;
+	restore;
+	call MOD_5;
+endif;
+
+//cause of exception is illegal memory access
+if(EC == 2) then
+	print "illegal_mem_acces";
+	backup;
+	R1 = EXIT_PROCESS;
+	R2 = [SYSTEM_STATUS_TABLE + 1];
+	call MOD_1;
+	restore;
+	call MOD_5;
+endif;
+
+//cause of exception is arithmetic exception
+if(EC == 3) then
+	print "arithmetic_excp";
+	backup;
+	R1 = EXIT_PROCESS;
+	R2 = [SYSTEM_STATUS_TABLE + 1];
+	call MOD_1;
+	restore;
+	call MOD_5;
+endif;
+
+//page fault
+if(EC == 0) then
+	if((EPN == 4) || (EPN == 5) || (EPN == 6) || (EPN == 7)) then
+		backup;
+		R1 = GET_CODE_PAGE;
+		R2 = [DISK_MAP_TABLE + (10 * [SYSTEM_STATUS_TABLE + 1]) + EPN];
+		call MOD_2;
+		[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + 1] * 20) + (2 * EPN)]= R0;
+		[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + 1] * 20) + (2 * EPN) + 1] = "1100";
+		restore;
+	endif;
+	if((EPN == 2) || (EPN == 3)) then
+		backup;
+		R1 = GET_FREE_PAGE;
+		call MOD_2;
+		[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + 1] * 20) + (2 * EPN)] = R0;
+		[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + 1] * 20) + (2 * EPN) + 1] = "1110";
+		restore;
+	endif;
+endif;
+
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 9] = 0;
+multipop(EIP);
+restore;
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 13];
+SP = SP + 1;
+[[PTBR + (2 * (SP / 512))] * 512 + (SP % 512)] = EIP;
+ireturn;
+//-------------------------------------------------------

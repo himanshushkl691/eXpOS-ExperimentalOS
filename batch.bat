@@ -3,7 +3,7 @@ load --init $HOME/Desktop/myexpos/expl/sample/shell_1.xsm
 load --exec $HOME/Desktop/myexpos/expl/sample/even.xsm
 load --exec $HOME/Desktop/myexpos/expl/sample/gcd.xsm
 load --idle $HOME/Desktop/myexpos/expl/sample/idle.xsm
-load --exhandler $HOME/Desktop/myexpos/spl/spl_progs/haltprog.xsm
+load --exhandler $HOME/Desktop/myexpos/spl/spl_progs/exception_handler.xsm
 load --library $HOME/Desktop/myexpos/expl/library.lib
 load --int=timer $HOME/Desktop/myexpos/spl/spl_progs/timer_handler.xsm
 load --int=console $HOME/Desktop/myexpos/spl/spl_progs/console_interrupt.xsm

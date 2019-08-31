@@ -44,18 +44,32 @@ endif;
 //---------Free Page Table-------------
 if(funcNum == FREE_PAGE_TABLE) then
 	alias temp R4;
+	alias disk_entry R5;
 	PTBR = PAGE_TABLE_BASE + currPID * 20;
 	[PTBR + 0] = -1;
 	[PTBR + 1] = "0000";
 	[PTBR + 2] = -1;
 	[PTBR + 3] = "0000";
+	disk_entry = (currPID * 10) + DISK_MAP_TABLE;
+	temp = 0;
+	while(temp < 10) do
+		if(([disk_entry + temp] != -1) && (temp == 2 || temp == 3 || temp == 8 || temp == 9)) then
+			backup;
+			R1 = RELEASE_BLOCK;
+			R2 = [disk_entry + temp];	//block number
+			call MOD_2;			//memory manager
+			restore;
+		endif;
+		[disk_entry + temp] = -1;
+		temp = temp + 1;
+	endwhile;
 	temp = 4;
 	while(temp < 20) do
 		if([PTBR + temp] != -1) then
 			backup;
-				R1 = RELEASE_PAGE;
-				R2 = [PTBR + temp];
-				call MOD_2;
+			R1 = RELEASE_PAGE;
+			R2 = [PTBR + temp];
+			call MOD_2;
 			restore;
 			[PTBR + temp] = -1;
 			[PTBR + temp + 1] = "0000";
