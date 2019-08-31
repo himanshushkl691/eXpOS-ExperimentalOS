@@ -3,7 +3,7 @@ alias funcNum R1;
 alias currPID R2;
 
 //------------ACQUIRING TERMINAL---------
-if(funcNum == 8) then
+if(funcNum == ACQUIRE_TERMINAL) then
 	
 	//-------wait till terminal is released------
 	while(([TERMINAL_STATUS_TABLE]) == 1) do
@@ -18,9 +18,10 @@ if(funcNum == 8) then
 	[TERMINAL_STATUS_TABLE+1]=currPID;	//set PID field in terminal_status_table
 	return;
 endif;
+//--------------------------------------
 
 //----------RELEASING TERMINAL----------
-if(funcNum == 9) then
+if(funcNum == RELEASE_TERMINAL) then
 	if(currPID != [TERMINAL_STATUS_TABLE+1]) then
 		R0 = -1;
 		return;
@@ -39,3 +40,18 @@ if(funcNum == 9) then
 		return;
 	endif;
 endif;
+//-------------------------------------
+
+//---------ACQUIRE DISK(final version)-
+if(funcNum == ACQUIRE_DISK) then
+	while ([DISK_STATUS_TABLE] == 1) do
+		[PROCESS_TABLE + (currPID * 16) + 4] = WAIT_DISK;
+		backup;
+		call MOD_5;
+		restore;
+	endwhile;
+	[DISK_STATUS_TABLE] = 1;	//acquire disk
+	[DISK_STATUS_TABLE + 4] = currPID;	//set PID field
+	return;
+endif;
+//-------------------------------------

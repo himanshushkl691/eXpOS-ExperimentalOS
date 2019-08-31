@@ -3,14 +3,13 @@ alias funcNum R1;
 alias currPID R2;
 //R1 --> function Name
 //R2 --> PID of curr_proc
-//R3 --> content/address
 
 //-----Terminal Write function-----
-if(funcNum == 3) then
+if(funcNum == TERMINAL_WRITE) then
 
 	//-------CALLING ACQUIRE TERMINAL------
 	backup;
-	R1 = 8;	//set R1 to 8 for acquiring terminal
+	R1 = ACQUIRE_TERMINAL;	//set R1 to 8 for acquiring terminal
 	R2 = [SYSTEM_STATUS_TABLE + 1];	//set R2 to PID of curr_proc
 	call MOD_0;	//call resource manager module
 	restore;
@@ -19,7 +18,7 @@ if(funcNum == 3) then
 
 	//------CALLING RELEASE TERMINAL-----
 	backup;
-	R1 = 9;	//set R1 to 9 for releasing terminal
+	R1 = RELEASE_TERMINAL;	//set R1 to 9 for releasing terminal
 	R2 = [SYSTEM_STATUS_TABLE+1];
 	call MOD_0;	//call resource manager module
 	restore;
@@ -29,11 +28,11 @@ endif;
 //--------------------------------
 
 //-----Terminal Read function------
-if(funcNum == 4) then
+if(funcNum == TERMINAL_READ) then
 
 	//------CALLING ACQUIRE TERMINAL-------
 	backup;
-	R1 = 8;
+	R1 = ACQUIRE_TERMINAL;
 	R2 = [SYSTEM_STATUS_TABLE + 1];
 	call MOD_0;
 	restore;
@@ -49,7 +48,28 @@ if(funcNum == 4) then
 	//-------------------------------------
 	return;
 endif;
-return;
 //---------------------------------
 
+//-------DISK LOAD FUNCTION--------
+if (funcNum == DISK_LOAD) then
+	alias page_number R3;
+	alias block_number R4;
+	backup;
+	R1 = ACQUIRE_DISK;
+	R2 = currPID;
+	call MOD_0;
+	restore;
+	[DISK_STATUS_TABLE + 1] = 0;	//0-->load operation
+	[DISK_STATUS_TABLE + 2] = page_number;	//set page number
+	[DISK_STATUS_TABLE + 3] = block_number;	//set block number
+	load(page_number,block_number);
+	[PROCESS_TABLE + (currPID*16) + 4] = WAIT_DISK;
+	backup;
+	call MOD_5;
+	restore;
+	return;
+endif;
+//---------------------------------
+
+return;
 //---------------------------------------------------------------

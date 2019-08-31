@@ -2,7 +2,7 @@
 alias funcNum R1;
 alias currPID R2;
 
-//----------Free User Area Page---------
+//----------Free User Area Page--------
 if(funcNum == FREE_USER_AREA_PAGE) then
 	alias userAreaPageNum R3;
 	userAreaPageNum = [PROCESS_TABLE + (currPID * 16) + 11];
@@ -16,7 +16,7 @@ if(funcNum == FREE_USER_AREA_PAGE) then
 	restore;
 	return;
 endif;
-//--------------------------------------
+//-------------------------------------
 
 //----------Exit Process---------------
 if(funcNum == EXIT_PROCESS) then

@@ -125,7 +125,14 @@ call MOD_2;
 [PTBR + 8] = R0;
 [PTBR + 9] = "0100";
 restore;
-loadi([PTBR + 8],[inode_pos + 8]);
+//loadi([PTBR + 8],[inode_pos + 8]);
+backup;
+R1 = DISK_LOAD;		//disk_load function
+R2 = exitPID;		//pid of process
+R3 = [PTBR + 8];	//page number
+R4 = [inode_pos + 8];	//block number
+call MOD_4;
+restore;
 endif;
 
 if([inode_pos + 9] != -1) then
@@ -135,7 +142,14 @@ call MOD_2;
 [PTBR + 10] = R0;
 [PTBR + 11] = "0100";
 restore;
-loadi([PTBR + 10],[inode_pos + 9]);
+//loadi([PTBR + 10],[inode_pos + 9]);
+backup;
+R1 = DISK_LOAD;		//disk_load function
+R2 = exitPID;		//pid of process
+R3 = [PTBR + 10];	//page number
+R4 = [inode_pos + 9];	//block number
+call MOD_4;
+restore;
 endif;
 
 if([inode_pos + 10] != -1) then
@@ -145,7 +159,14 @@ call MOD_2;
 [PTBR + 12] = R0;
 [PTBR + 13] = "0100";
 restore;
-loadi([PTBR + 12],[inode_pos + 10]);
+//loadi([PTBR + 12],[inode_pos + 10]);
+backup;
+R1 = DISK_LOAD;		//disk_load function
+R2 = exitPID;		//pid of process
+R3 = [PTBR + 12];	//page number
+R4 = [inode_pos + 10];	//block number
+call MOD_4;
+restore;
 endif;
 
 if([inode_pos + 11] != -1) then
@@ -155,9 +176,23 @@ call MOD_2;
 [PTBR + 14] = R0;
 [PTBR + 15] = "0100";
 restore;
-loadi([PTBR + 14],[inode_pos + 11]);
+//loadi([PTBR + 14],[inode_pos + 11]);
+backup;
+R1 = DISK_LOAD;		//disk_load function
+R2 = exitPID;		//pid of process
+R3 = [PTBR + 14];	//page number
+R4 = [inode_pos + 11];	//block number
+call MOD_4;
+restore;
 endif;
 //-----------------------------
+//initialise per-process table
+alias off R9;
+off = 496;
+while(off <= 511) do
+	[user_area_page_number * 512 + off] = -1;
+	off = off + 2;
+endwhile;
 //------------------------------------
 
 [[PTBR + 16] * 512] = [[PTBR + 8] * 512 + 1];

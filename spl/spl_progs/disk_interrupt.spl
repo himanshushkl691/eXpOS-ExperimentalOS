@@ -1,0 +1,27 @@
+//------------------DISK INTERRUPT HANDLER------------------
+breakpoint;
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 13] = SP;
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 11] * 512 - 1;
+backup;
+
+//disk is not busy
+[DISK_STATUS_TABLE] = 0;
+
+//wake up all process waiting for disk
+alias i R0;
+alias temp R1;
+i = 0;
+while(i < 16) do
+	temp = PROCESS_TABLE + (i * 16);
+	if([temp + 4] == WAIT_DISK) then
+		[temp + 4] = READY;
+	endif;
+	i = i + 1;
+endwhile;
+restore;
+//restore SP to value stored in UPTR field
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 13];
+breakpoint;
+ireturn;
+
+//----------------------------------------------------------
