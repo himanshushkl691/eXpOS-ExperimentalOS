@@ -1,0 +1,66 @@
+decl
+	int arr[50], swap(int i,int j), BubbleSort(int size);
+enddecl
+
+int swap(int i,int j)
+{
+	decl
+		int temp;
+	enddecl
+	begin
+		temp = arr[i];
+		arr[i] = arr[j];
+		arr[j] = temp;
+		return 0;
+	end
+}
+
+int BubbleSort(int size)
+{
+	decl
+		int i,j,temp;
+	enddecl
+	begin
+		i = 0;
+		while(i < size) do
+			j = 0;
+			while(j < (size - 1)) do
+				if(arr[j] > arr[j + 1]) then
+					temp = swap(j,j + 1);
+				endif;
+				j = j + 1;
+			endwhile;
+			i = i + 1;
+		endwhile;
+		return 0;
+	end
+}
+
+int main()
+{
+	decl
+		str mystr;
+		int i,ret,size;
+	enddecl
+	begin
+		mystr = "Size";
+		ret = exposcall("Write",-2,mystr);
+		ret = exposcall("Read",-1,size);
+		i = 0;
+		mystr = "Input array";
+		ret = exposcall("Write",-2,mystr);
+		while(i < size) do
+			ret = exposcall("Read",-1,arr[i]);
+			i = i + 1;
+		endwhile;
+		ret = BubbleSort(size);
+		i = 0;
+		mystr = "Sorted array";
+		ret = exposcall("Write",-2,mystr);
+		while(i < size) do
+			ret = exposcall("Write",-2,arr[i]);
+			i = i + 1;
+		endwhile;
+		return 0;
+	end
+}

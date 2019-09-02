@@ -1,0 +1,88 @@
+type
+Node{
+	int item;
+	Node next;
+}
+LinkedList{
+	Node head;
+	int len;
+}
+endtype
+
+decl
+	LinkedList l;
+	LinkedList insert(LinkedList l,int item);
+	int printList(LinkedList l);
+enddecl
+
+LinkedList insert(LinkedList l,int item)
+{
+	decl
+		Node curr,prev,newnode;
+	enddecl
+	begin
+		newnode = alloc();
+		newnode.item = item;
+		newnode.next = null;
+		curr = l.head;
+		prev = null;
+		while(curr != null) do
+			prev = curr;
+			curr = curr.next;
+		endwhile;
+		if(prev == null) then
+			prev = newnode;
+			l.head = prev;
+		else
+			prev.next = newnode;
+		endif;
+		l.len = l.len + 1;
+		return l;
+	end
+}
+
+int printList(LinkedList l)
+{
+	decl
+		int ret;
+		Node curr;
+	enddecl
+	begin
+		curr = l.head;
+		while(curr != null) do
+			ret = exposcall("Write",-2,curr.item);
+			curr = curr.next;
+		endwhile;
+		return 0;
+	end
+}
+
+int main()
+{
+	decl
+		str mystr;
+		int ret,size,i,item;
+		Node newnode;
+	enddecl
+	begin
+		ret = initialize();
+		l = alloc();
+		l.head = null;
+		l.len = 0;
+		mystr = "Size";
+		ret = exposcall("Write",-2,mystr);
+		ret = exposcall("Read",-1,size);
+		i = 0;
+		mystr = "Input";
+		ret = exposcall("Write",-2,mystr);
+		while(i < size) do
+			ret = exposcall("Read",-1,item);
+			l = insert(l,item);
+			i = i + 1;
+		endwhile;
+		mystr = "Result";
+		ret = exposcall("Write",-2,mystr);
+		ret = printList(l);
+		return 0;
+	end
+}
