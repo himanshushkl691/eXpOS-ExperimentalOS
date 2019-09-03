@@ -50,7 +50,7 @@ if(funcNum == TERMINAL_READ) then
 endif;
 //---------------------------------
 
-//-------DISK LOAD FUNCTION--------
+//--DISK LOAD FUNCTION(final version)--
 if (funcNum == DISK_LOAD) then
 	alias page_number R3;
 	alias block_number R4;
@@ -69,7 +69,7 @@ if (funcNum == DISK_LOAD) then
 	restore;
 	return;
 endif;
-//---------------------------------
+//-------------------------------------
 
 return;
 //---------------------------------------------------------------
