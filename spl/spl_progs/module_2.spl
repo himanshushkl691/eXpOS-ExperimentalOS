@@ -56,7 +56,7 @@ if(funcNum == RELEASE_PAGE) then
 endif;
 //---------------------------------
 
-//---------Get Code Page-----------
+//------Get Code Page(final)-------
 if(funcNum == GET_CODE_PAGE) then
 	alias block_num R2;
 	alias i R3;
@@ -89,7 +89,7 @@ if(funcNum == GET_CODE_PAGE) then
 endif;
 //---------------------------------
 
-//--------RELEASE BLOCK------------
+//------RELEASE BLOCK(final)-------
 if(funcNum == RELEASE_BLOCK) then
 	alias block_num R2;
 	[DISK_FREE_LIST + block_num] = [DISK_FREE_LIST + block_num] - 1;
