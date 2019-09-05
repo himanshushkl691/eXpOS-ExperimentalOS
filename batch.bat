@@ -1,10 +1,9 @@
 load --os $HOME/Desktop/myexpos/spl/spl_progs/final_os_startup.xsm
 load --init $HOME/Desktop/myexpos/expl/sample/shell_1.xsm
-load --exec $HOME/Desktop/myexpos/expl/sample/student.xsm
 load --exec $HOME/Desktop/myexpos/expl/sample/gcd.xsm
-load --exec $HOME/Desktop/myexpos/expl/sample/prime.xsm
-load --exec $HOME/Desktop/myexpos/expl/sample/bubble.xsm
 load --exec $HOME/Desktop/myexpos/expl/sample/llist.xsm
+load --exec $HOME/Desktop/myexpos/expl/sample/student.xsm
+load --exec $HOME/Desktop/myexpos/expl/sample/bubble.xsm
 load --idle $HOME/Desktop/myexpos/expl/sample/idle.xsm
 load --exhandler $HOME/Desktop/myexpos/spl/spl_progs/exception_handler.xsm
 load --library $HOME/Desktop/myexpos/expl/library.lib

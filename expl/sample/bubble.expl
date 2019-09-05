@@ -44,6 +44,7 @@ int main()
 	enddecl
 	begin
 		mystr = "Size";
+		breakpoint;
 		ret = exposcall("Write",-2,mystr);
 		ret = exposcall("Read",-1,size);
 		i = 0;
