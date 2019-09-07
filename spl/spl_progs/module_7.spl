@@ -14,6 +14,10 @@ loadi(15,28);
 loadi(16,29);
 loadi(17,30);
 
+//load INT 8 module
+loadi(18,31);
+loadi(19,32);
+
 //load INT_9 module
 loadi(20,33);
 loadi(21,34);
@@ -88,6 +92,15 @@ endwhile;
 
 //mem_free_count
 [SYSTEM_STATUS_TABLE + 2] = cnt;
+
+//initially terminal is free
+[TERMINAL_STATUS_TABLE]=0;
+
+//reset WAIT_MEM_COUNT
+[SYSTEM_STATUS_TABLE + 3] = 0;
+
+//disk is not busy
+[DISK_STATUS_TABLE] = 0;
 
 //-----------------INIT Program---------------------
 PTBR = PAGE_TABLE_BASE;
@@ -193,14 +206,4 @@ endwhile;
 //ptlr
 //[PROCESS_TABLE + i + 15] = 10;
 //[84 * 512] = [83 * 512 + 1];
-
-//initially terminal is free
-[TERMINAL_STATUS_TABLE]=0;
-
-//reset WAIT_MEM_COUNT
-[SYSTEM_STATUS_TABLE + 3] = 0;
-
-//disk is not busy
-[DISK_STATUS_TABLE] = 0;
-
 return;

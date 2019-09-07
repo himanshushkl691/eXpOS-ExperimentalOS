@@ -41,7 +41,7 @@ if(funcNum == EXIT_PROCESS) then
 endif;
 //-------------------------------------
 
-//---------Free Page Table-------------
+//------Free Page Table(final)---------
 if(funcNum == FREE_PAGE_TABLE) then
 	alias temp R4;
 	alias disk_entry R5;
@@ -76,6 +76,25 @@ if(funcNum == FREE_PAGE_TABLE) then
 		endif;
 		temp = temp + 2;
 	endwhile;
+	return;
+endif;
+//-------------------------------------
+
+//--------Get PCB Entry(final)---------
+if(funcNum == GET_PCB_ENTRY) then
+	alias i R3;
+	i = 0;
+	while(i < 16) do
+		if([PROCESS_TABLE + (i * 16) + 4] == TERMINATED) then
+			R0 = i;		//pid of new process
+			[PROCESS_TABLE + (i * 16) + 4] = ALLOCATED;
+			[PROCESS_TABLE + (i * 16) + 14] = PAGE_TABLE_BASE + (20 * i);
+			[PROCESS_TABLE + (i * 16) + 15] = 10;
+			return;
+		endif;
+		i = i + 1;
+	endwhile;
+	R0 = -1;	//if index is not found
 	return;
 endif;
 //-------------------------------------

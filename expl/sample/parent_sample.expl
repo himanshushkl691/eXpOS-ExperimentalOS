@@ -1,0 +1,22 @@
+int main()
+{
+	decl
+		str mystr;
+		int ret;
+	enddecl
+	begin
+		ret = exposcall("Fork");
+		if(ret == 0) then
+			mystr = "inChild";
+			ret = exposcall("Write",-2,mystr);
+			mystr = "even.xsm";
+			ret = exposcall("Exec",mystr);
+		else
+			mystr = "inParent";
+			ret = exposcall("Write",-2,mystr);
+			mystr = "odd.xsm";
+			ret = exposcall("Exec",mystr);
+		endif;
+		return 0;
+	end
+}

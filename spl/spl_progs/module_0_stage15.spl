@@ -42,7 +42,7 @@ if(funcNum == RELEASE_TERMINAL) then
 endif;
 //-------------------------------------
 
-//---------ACQUIRE DISK(final version)-
+//---------ACQUIRE DISK(final)---------
 if(funcNum == ACQUIRE_DISK) then
 	while ([DISK_STATUS_TABLE] == 1) do
 		[PROCESS_TABLE + (currPID * 16) + 4] = WAIT_DISK;

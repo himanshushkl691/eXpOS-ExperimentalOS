@@ -1,0 +1,74 @@
+type
+Node{
+	int item;
+	Node next;
+}
+LinkedList{
+	Node head;
+	int len;
+}
+endtype
+
+decl
+	LinkedList l;
+enddecl
+
+int main()
+{
+	decl
+		str mystr;
+		int ret,i;
+		Node newnode,curr;
+	enddecl
+	begin
+		breakpoint;
+		ret = initialize();
+		breakpoint;
+		l = alloc();
+		breakpoint;
+		l.head = null;
+		l.len = 0;
+		curr = l.head;
+		i = 1;
+		while(i < 101) do
+			newnode = alloc();
+			newnode.item = i;
+			newnode.next = null;
+			if(l.head == null) then
+				l.head = newnode;
+				curr = newnode;
+			else
+				curr.next = newnode;
+				curr = curr.next;
+			endif;
+			l.len = l.len + 1;
+			i = i + 1;
+		endwhile;
+		mystr = "Result";
+		ret = exposcall("Write",-2,mystr);
+		ret = exposcall("Fork");
+		if(ret == 0) then
+			curr = l.head;
+			while(curr != null) do
+				ret = exposcall("Write",-2,curr.item);
+				curr = curr.next;
+				if(curr == null) then
+					break;
+				endif;
+				curr = curr.next;
+			endwhile;
+		else
+			curr = l.head;
+			curr = curr.next;
+			while(curr != null) do
+				ret = exposcall("Write",-2,curr.item);
+				curr = curr.next;
+				if(curr == null) then
+					break;
+				endif;
+				curr = curr.next;
+			endwhile;
+		endif;
+		return 0;
+	end
+}
