@@ -232,7 +232,7 @@ int debug_command(char *command)
         {
             arg2 = strtok(NULL, delim);
             if (!arg2)
-                debug_display_mem(atoi(arg1));
+                debug_display_mem_range(atoi(arg1), atoi(arg1));
             else
                 debug_display_mem_range(atoi(arg1), atoi(arg2));
         }
@@ -485,50 +485,38 @@ int debug_display_range_reg(const char *reg_b_name, const char *reg_e_name)
     return TRUE;
 }
 
-/* Debug mem page command */
-int debug_display_mem(int page)
-{
-    int i, ptr;
-    char *content;
-    xsm_word *word;
-    FILE *fp;
-
-    fp = fopen("mem", "w");
-    word = memory_get_page(page);
-
-    if (!word)
-    {
-        printf("No such page.\n");
-        return FALSE;
-    }
-
-    ptr = page * XSM_PAGE_SIZE;
-
-    // Write to file mem
-    for (i = 0; i < XSM_PAGE_SIZE; i++)
-    {
-        word = memory_get_word(ptr);
-        content = word_get_string(word);
-        fprintf(fp, "%d: %s\n", i, content);
-        ptr++;
-    }
-
-    fclose(fp);
-    printf("Written to file mem.\n");
-    return TRUE;
-}
-
 /* Debug mem page_l page_r command */
 int debug_display_mem_range(int page_l, int page_h)
 {
-    int i;
-
+    int i,j;
+    int ptr;
+    char *content;
+    xsm_word *word;
+    FILE *fp;
+    fp = fopen("mem", "w");
     for (i = page_l; i <= page_h; ++i)
     {
         printf("Page: %d\n", i);
-        debug_display_mem(i);
-    }
+    	word = memory_get_page(i);
+        if (!word)
+    	{
+        	printf("No such page.\n");
+        	return FALSE;
+    	}
+	ptr = i * XSM_PAGE_SIZE;
+        fprintf(fp, "Page: %d\n", i);
+	// Write to file mem
+    	for (j = 0; j < XSM_PAGE_SIZE; j++)
+    	{
+        	word = memory_get_word(ptr);
+        	content = word_get_string(word);
+        	fprintf(fp, "%d: %s\n", j, content);
+        	ptr++;
+    	}
 
+    }
+    printf("Written to file mem\n");
+    fclose(fp);
     return TRUE;
 }
 
