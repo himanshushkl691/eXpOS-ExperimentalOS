@@ -8,10 +8,16 @@ userSP = SP;
 SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] * 512 - 1;
 backup;
 multipush(EIP);
+print "************";
+print "ExcInstPtr";
+print EIP;
+print "ExcCause";
+print EC;
 
 //if cause of exception is illegal instruction
 if(EC == 1) then
 	print "illegal_inst";
+	print "************";
 	backup;
 	R1 = EXIT_PROCESS;
 	R2 = [SYSTEM_STATUS_TABLE + 1];
@@ -23,6 +29,7 @@ endif;
 //cause of exception is illegal memory access
 if(EC == 2) then
 	print "illegal_mem_acces";
+	print "************";
 	backup;
 	R1 = EXIT_PROCESS;
 	R2 = [SYSTEM_STATUS_TABLE + 1];
@@ -34,6 +41,7 @@ endif;
 //cause of exception is arithmetic exception
 if(EC == 3) then
 	print "arithmetic_excp";
+	print "************";
 	backup;
 	R1 = EXIT_PROCESS;
 	R2 = [SYSTEM_STATUS_TABLE + 1];
@@ -44,6 +52,9 @@ endif;
 
 //page fault
 if(EC == 0) then
+	print "PageFaultNo!";
+	print EPN;
+	print "************";
 	if((EPN == 4) || (EPN == 5) || (EPN == 6) || (EPN == 7)) then
 		backup;
 		R1 = GET_CODE_PAGE;

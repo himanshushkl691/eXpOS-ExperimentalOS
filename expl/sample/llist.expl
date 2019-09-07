@@ -65,8 +65,11 @@ int main()
 		Node newnode;
 	enddecl
 	begin
+		breakpoint;
 		ret = initialize();
+		breakpoint;
 		l = alloc();
+		breakpoint;
 		l.head = null;
 		l.len = 0;
 		mystr = "Size";

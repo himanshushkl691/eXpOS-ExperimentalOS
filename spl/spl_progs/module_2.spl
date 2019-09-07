@@ -58,10 +58,15 @@ endif;
 
 //------Get Code Page(final)-------
 if(funcNum == GET_CODE_PAGE) then
+	print "*********";
+	print "=>PID.";
+	print [SYSTEM_STATUS_TABLE + 1];
 	alias block_num R2;
 	alias i R3;
 	alias disk_entry R4;
-	i = 0;
+	i = 1;
+	print "ReqBlock";
+	print block_num;
 	while(i < 16) do
 		disk_entry = DISK_MAP_TABLE + (10 * i);
 		alias page R5;
@@ -79,11 +84,14 @@ if(funcNum == GET_CODE_PAGE) then
 	//if page is not in memory
 	R1 = GET_FREE_PAGE;
 	call MOD_2;
+	print "RetPageNo.";
+	print R0;
+	print "***********";
 	//load(page_num,block_num)
 	R1 = DISK_LOAD;			//funcNum
-	R2 = [SYSTEM_STATUS_TABLE + 1];	//currPID
 	R3 = R0;			//page number in which block_num content is loaded
 	R4 = block_num;			//block which we want to load
+	R2 = [SYSTEM_STATUS_TABLE + 1];	//pid
 	call MOD_4;			//device manager
 	return;
 endif;
