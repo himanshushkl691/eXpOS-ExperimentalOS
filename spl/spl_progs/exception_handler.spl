@@ -16,7 +16,7 @@ multipush(EIP);
 
 //if cause of exception is illegal instruction
 if(EC == 1) then
-	//print "illegal_inst";
+	print "IllegalInst";
 	//print "************";
 	backup;
 	R1 = EXIT_PROCESS;
@@ -28,7 +28,7 @@ endif;
 
 //cause of exception is illegal memory access
 if(EC == 2) then
-	//print "illegal_mem_acces";
+	print "IllegalMemAccess";
 	//print "************";
 	backup;
 	R1 = EXIT_PROCESS;
@@ -40,7 +40,7 @@ endif;
 
 //cause of exception is arithmetic exception
 if(EC == 3) then
-	//print "arithmetic_excp";
+	print "ArithmeticExc";
 	//print "************";
 	backup;
 	R1 = EXIT_PROCESS;
@@ -52,7 +52,7 @@ endif;
 
 //page fault
 if(EC == 0) then
-	//print "PageFaultNo!";
+	print "PageFault!";
 	//print EPN;
 	//print "************";
 	if((EPN == 4) || (EPN == 5) || (EPN == 6) || (EPN == 7)) then
@@ -65,24 +65,24 @@ if(EC == 0) then
 		restore;
 	endif;
 	if((EPN == 2) || (EPN == 3)) then
+		backup;
+		R1 = GET_FREE_PAGE;
+		call MOD_2;
+		[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + 1] * 20) + (2 * EPN)] = R0;
+		[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + 1] * 20) + (2 * EPN) + 1] = "1110";
+		restore;
 		//backup;
 		//R1 = GET_FREE_PAGE;
 		//call MOD_2;
-		//[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + 1] * 20) + (2 * EPN)] = R0;
-		//[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + 1] * 20) + (2 * EPN) + 1] = "1110";
+		//[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + 1] * 20) + 4] = R0;
+		//[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + 1] * 20) + 5] = "1110";
 		//restore;
-		backup;
-		R1 = GET_FREE_PAGE;
-		call MOD_2;
-		[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + 1] * 20) + 4] = R0;
-		[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + 1] * 20) + 5] = "1110";
-		restore;
-		backup;
-		R1 = GET_FREE_PAGE;
-		call MOD_2;
-		[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + 1] * 20) + 6] = R0;
-		[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + 1] * 20) + 7] = "1110";
-		restore;
+		//backup;
+		//R1 = GET_FREE_PAGE;
+		//call MOD_2;
+		//[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + 1] * 20) + 6] = R0;
+		//[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + 1] * 20) + 7] = "1110";
+		//restore;
 	endif;
 endif;
 
