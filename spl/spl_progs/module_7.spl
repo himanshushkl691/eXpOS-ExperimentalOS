@@ -26,6 +26,14 @@ loadi(21,34);
 loadi(22,35);
 loadi(23,36);
 
+//load INT_11 module
+loadi(24,37);
+loadi(25,38);
+
+//load INT_15 module
+loadi(32,45);
+loadi(33,46);
+
 //load MOD_0
 loadi(40,53);
 loadi(41,54);

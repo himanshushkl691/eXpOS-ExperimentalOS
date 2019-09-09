@@ -1,0 +1,35 @@
+int main()
+{
+	decl
+		str command;
+		int ret,a;
+	enddecl
+	begin
+		a = 1;
+		while(a == 1) do
+			ret = exposcall("Write",-2,"ENTER-COMMAND");
+			ret = exposcall("Read",-1,command);
+			if(command != "Shutdown") then
+				ret = exposcall("Fork");
+				if(ret < 0) then
+					ret = exposcall("Write",-2,"FORK FAILURE");
+					continue;
+				else
+					if(ret != 0) then
+						ret = exposcall("Wait",ret);
+					else
+						ret = exposcall("Exec",command);
+						if(ret < 0) then
+							ret = exposcall("Write",-2,"BAD COMMAND");
+							break;
+						endif;
+					endif;
+				endif;
+			else
+				ret = exposcall("Shutdown");
+				break;
+			endif;
+		endwhile;
+		return 0;
+	end
+}

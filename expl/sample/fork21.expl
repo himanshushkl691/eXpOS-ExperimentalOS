@@ -1,0 +1,25 @@
+int main()
+{
+	decl
+		int ret;
+	enddecl
+	begin
+		ret = exposcall("Fork");
+		if(ret != -1) then
+			ret = exposcall("Fork");
+			if(ret != -1) then
+				ret = exposcall("Fork");
+				if(ret != -1) then
+					ret = exposcall("Exec","pid.xsm");
+				else
+					ret = exposcall("Write",-2,"FORK ERROR3");
+				endif;
+			else
+				ret = exposcall("Write",-2,"FORK ERROR2");
+			endif;
+		else
+			ret = exposcall("Write",-2,"FORK ERROR1");
+		endif;
+		return 0;
+	end
+}

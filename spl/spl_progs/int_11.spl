@@ -1,0 +1,108 @@
+//----------------------------------------INTERRUPT 11 MODULE---------------------------------------
+
+//extract system_call number from user stack
+alias sys_call_num R0;
+alias userSP R1;
+alias currPID R2;
+currPID = [SYSTEM_STATUS_TABLE + 1];
+userSP = SP;
+sys_call_num = [[PTBR + (2 * ((userSP - 5) / 512))] * 512 + ((userSP - 5) % 512)];
+//switch to kernel stack
+[PROCESS_TABLE + (16 * [SYSTEM_STATUS_TABLE + 1]) + 13] = SP;
+SP = [PROCESS_TABLE + (16 * [SYSTEM_STATUS_TABLE + 1]) + 11] * 512 - 1;
+
+//-----------Get PID System Call(11)(final)--------------
+if(sys_call_num == 11) then
+	//set mode flag to system call number
+	[PROCESS_TABLE + (currPID * 16) + 9] = sys_call_num;
+
+	//return PID of current process from Process Table
+	[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + ((userSP - 1) % 512)] = [PROCESS_TABLE + (currPID * 16) + 1];
+
+	//reset mode flag to 0 for user mode
+	[PROCESS_TABLE + (currPID * 16) + 9] = 0;
+	
+	//set user stack
+	SP = userSP;
+	ireturn;
+endif;
+//-------------------------------------------------------
+
+//-----------Get PPID System Call(12)(final)-------------
+if(sys_call_num == 12) then
+	//set mode field to system call number
+	[PROCESS_TABLE + (16 * currPID) + 9] = sys_call_num;
+
+	//return parent process PID
+	[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + ((userSP - 1) % 512)] = [PROCESS_TABLE + (currPID * 16) + 2];
+	
+	//reset mode field to 0 for user mode
+	[PROCESS_TABLE + (16 * currPID) + 9] = 0;
+	SP = userSP;
+	ireturn;
+endif;
+//-------------------------------------------------------
+
+//--------------Wait System Call(13)(final)--------------
+if(sys_call_num == 13) then
+	alias argPID R3;
+	
+	[PROCESS_TABLE + (16 * currPID) + 9] = sys_call_num;				//change mode field in process table
+	argPID = [[PTBR + 2 * ((userSP - 4) / 512)] * 512 + ((userSP - 4) % 512)];	//extract PID from argument1	
+
+	if((argPID < 0)||(argPID >= 16)||(argPID == currPID)||([PROCESS_TABLE + (16*argPID) + 4] == TERMINATED)) then
+		[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + ((userSP - 1) % 512)] = -1;	//return value -1 failure!
+		[PROCESS_TABLE + (16 * currPID) + 9] = 0;				//reset mode flag
+		SP = userSP;
+		ireturn;
+	endif;
+	
+	//if all valid conditions are satisfied
+	//change state of current process to 2-tuple (WAIT_PROCESS,argument PID)
+	[PROCESS_TABLE + (16 * currPID) + 4] = WAIT_PROCESS;
+	[PROCESS_TABLE + (16 * currPID) + 5] = argPID;
+
+	//invoke scheduler
+	backup;
+	call MOD_5;
+	restore;
+
+	//reset mode field of current process to user mode
+	[PROCESS_TABLE + (16 * currPID) + 9] = 	0;
+
+	//store return value as 0 for success
+	[[PTBR + 2 * ((userSP - 1 / 512))] * 512 + ((userSP - 1) % 512)] = 0;
+	
+	//set user stack
+	SP = userSP;
+	ireturn;
+endif;
+//-------------------------------------------------------
+
+//-------------Signal System Call(14)(final)-------------
+if(sys_call_num == 14) then
+	alias i R3;
+	
+	//set mode field of current process to system call number
+	[PROCESS_TABLE + (16 * currPID) + 9] = sys_call_num;
+	
+	//searching for the process which called wait() for current process
+	i = 0;
+	while(i < 16) do
+		if(([PROCESS_TABLE + (16 * i) + 4] == WAIT_PROCESS) && ([PROCESS_TABLE + (16 * i) + 5] == currPID)) then
+			[PROCESS_TABLE + (16 * i) + 4] = READY;
+		endif;
+		i = i + 1;
+	endwhile;
+	
+	//reset mode field to 0 user
+	[PROCESS_TABLE + (16 * currPID) + 9] = 0;
+
+	//set return value as 0 for success
+	[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + ((userSP - 1) % 512)] = 0;
+	SP = userSP;
+	ireturn;
+endif;
+//-------------------------------------------------------
+
+//--------------------------------------------------------------------------------------------------

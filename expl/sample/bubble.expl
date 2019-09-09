@@ -44,11 +44,10 @@ int main()
 	enddecl
 	begin
 		mystr = "Size";
-		breakpoint;
 		ret = exposcall("Write",-2,mystr);
 		ret = exposcall("Read",-1,size);
 		i = 0;
-		mystr = "Input array";
+		mystr = "Input Array";
 		ret = exposcall("Write",-2,mystr);
 		while(i < size) do
 			ret = exposcall("Read",-1,arr[i]);

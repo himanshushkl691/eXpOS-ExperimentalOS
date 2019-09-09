@@ -18,9 +18,25 @@ if(funcNum == FREE_USER_AREA_PAGE) then
 endif;
 //-------------------------------------
 
-//----------Exit Process---------------
+//--------Exit Process(final)----------
 if(funcNum == EXIT_PROCESS) then
-	
+	//if exit_process() is not called from exec()
+	if([PROCESS_TABLE + (currPID * 16) + 9] != 9)	then
+		alias i R3;
+		i = 0;
+		while(i < 16) do
+			//wake up all process waiting for current process to exit
+			if(([PROCESS_TABLE+(i*16)+4] == WAIT_PROCESS) && ([PROCESS_TABLE + (i*16) + 5] == currPID)) then
+				[PROCESS_TABLE + (i * 16) + 4] = READY;
+			endif;
+			//make children of current process orphan
+			if([PROCESS_TABLE + (i * 16) + 2] == currPID) then
+				[PROCESS_TABLE + (i * 16) + 2] = -1;
+			endif;
+			i = i + 1;
+		endwhile;
+	endif;
+
 	//deallocate page table entries
 	backup;
 	R1 = FREE_PAGE_TABLE;
@@ -87,6 +103,7 @@ if(funcNum == GET_PCB_ENTRY) then
 	while(i < 16) do
 		if([PROCESS_TABLE + (i * 16) + 4] == TERMINATED) then
 			R0 = i;		//pid of new process
+			[PROCESS_TABLE + (i * 16) + 1] = i;
 			[PROCESS_TABLE + (i * 16) + 4] = ALLOCATED;
 			[PROCESS_TABLE + (i * 16) + 14] = PAGE_TABLE_BASE + (20 * i);
 			[PROCESS_TABLE + (i * 16) + 15] = 10;
