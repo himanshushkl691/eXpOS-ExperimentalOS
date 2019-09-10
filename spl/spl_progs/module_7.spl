@@ -158,12 +158,23 @@ i = 16;
 [PROCESS_TABLE + i + 15] = 10;
 [76 * 512] = [65 * 512 + 1];
 
-//initialize per-process table of init
+//initialize per-process table for init
 i = 496;
 while(i <= 511) do
 	[80 * 512 + i] = -1;
 	i = i + 2;
 endwhile;
+
+//initialize disk-map table fot init
+i = 0;
+while(i < 10) do
+	[DISK_MAP_TABLE + 10 + i] = -1;
+	i = i + 1;
+endwhile;
+[DISK_MAP_TABLE + 10 + 4] = 7;
+[DISK_MAP_TABLE + 10 + 5] = 8;
+[DISK_MAP_TABLE + 10 + 6] = -1;
+[DISK_MAP_TABLE + 10 + 7] = -1;
 
 //---------------------EXEC Program--------------------------
 //PTBR = PAGE_TABLE_BASE;

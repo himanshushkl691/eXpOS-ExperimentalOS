@@ -1,0 +1,111 @@
+//------------------------------------INTERRUPT 13 MODULE-----------------------------------
+
+alias sys_call_num R0;
+alias userSP R1;
+alias currPID R2;
+userSP = SP;
+currPID = [SYSTEM_STATUS_TABLE + 1];
+sys_call_num = [[PTBR + 2 * ((userSP - 5) / 512)] * 512 + ((userSP - 5) % 512)];
+
+//switch to kernel stack
+[PROCESS_TABLE + (currPID * 16) + 13] = SP;
+SP = [PROCESS_TABLE + (currPID * 16) + 11] * 512 - 1;
+
+//------------Semget System Call(17)-------------
+if(sys_call_num == 17) then
+	alias i R3;
+	alias userAreaPage R4;
+	alias freeEntry R5;
+	userAreaPage = [PROCESS_TABLE + (currPID * 16) + 11];
+
+	//set mode flag to 17
+	[PROCESS_TABLE + (currPID * 16) + 9] = sys_call_num;
+	
+	i = 496;
+	freeEntry = -1;
+	while(i < 512) do
+		if([userAreaPage * 512 + i] == -1) then
+			freeEntry = i;
+			break;
+		endif;
+		i = i + 2;
+	endwhile;
+	
+	if(freeEntry == -1) then	//FAILURE!
+		//reset mode flag
+		[PROCESS_TABLE + (currPID * 16) + 9] = 0;
+		[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + ((userSP - 1) % 512)] = -1;
+		SP = userSP;
+		ireturn;
+	endif;
+	
+	//if valid entry is found
+	[userAreaPage * 512 + freeEntry] = 1;		//resource identifier entry for semaphore
+	
+	//acquire semaphore
+	multipush(R0,R1,R2,R3,R4,R5);
+	R1 = ACQUIRE_SEMAPHORE;
+	R2 = currPID;
+	call MOD_0;
+	R6 = R0;
+	multipop(R0,R1,R2,R3,R4,R5);
+	alias newSemaphore R6;
+
+	//if there are no free semaphore!
+	if(newSemaphore == -1) then
+		[PROCESS_TABLE + (currPID * 16) + 9] = 0;
+		[[PTBR + 2 * ((userSP - 1) / 512)] + ((userSP - 1) % 512)] = -2;
+		SP = userSP;
+		ireturn;
+	endif;
+	
+	//store index of semaphore table entry in per-process resource table entry
+	[userAreaPage * 512 + freeEntry + 1] = newSemaphore;
+	
+	SP = userSP;
+	[PROCESS_TABLE + (currPID * 16) + 9] = 0;
+	
+	//set return value as per-process resource table entry index
+	[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + ((userSP - 1) % 512)] = (freeEntry - 496) / 512;
+	ireturn;
+endif;
+//-----------------------------------------------
+
+//------------Semrelease System Call(18)---------
+if(sys_call_num == 18) then
+	alias semaphoreDescriptor R3;
+	alias userAreaPage R4;
+	[PROCESS_TABLE + (currPID * 16) + 9] = sys_call_num;
+
+	userAreaPage = [PROCESS_TABLE + (currPID * 16) + 11];
+	semaphoreDescriptor = [[PTBR + 2 * ((userSP - 4) / 512)] * 512 + ((userSP - 4) % 512)];
+	
+	if((semaphoreDescriptor < 0) || (semaphoreDescriptor > 7) || ([userAreaPage * 512 + 496 + 2 * semaphoreDescriptor]!=1))then
+		[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + ((userSP - 1) % 512)] = -1;
+		[PROCESS_TABLE + (currPID * 16) + 9] = 0;
+		SP = userSP;
+		ireturn;		
+	endif;
+
+	multipush(R0,R1,R2,R3,R4);
+	R1 = RELEASE_SEMAPHORE;
+	R2 = currPID;
+	R3 = [userAreaPage * 512 + 2 * semaphoreDescriptor + 496 + 1];
+	call MOD_0;
+	if(R0 == -1) then
+		print "InvSemDesc";
+	endif;
+	multipop(R0,R1,R2,R3,R4);
+
+	//invalidate per-process resource table entry
+	[userAreaPage * 512 + 2 * semaphoreDescriptor + 496] = -1;
+	//return value
+	[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + ((userSP - 1) % 512)] = 0;
+	
+	[PROCESS_TABLE + (currPID * 16) + 9] = 0;
+	SP = userSP;
+	ireturn;
+endif;
+//-----------------------------------------------
+
+//------------------------------------------------------------------------------------------
