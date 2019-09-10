@@ -65,8 +65,8 @@ int main()
 		Node newnode;
 	enddecl
 	begin
-		ret = initialize();
-		l = alloc();
+		ret = exposcall("Heapset");
+		l = exposcall("Alloc",2);
 		l.head = null;
 		l.len = 0;
 		mystr = "Size";

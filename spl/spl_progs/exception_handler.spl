@@ -1,8 +1,6 @@
 //------------------EXCEPTION HANDLER--------------------
 [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 9] = -1;
 //save SP in UPTR
-alias userSP R0;
-userSP = SP;
 [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 13] = SP;
 //switch to kernel stack
 SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] * 512 - 1;
@@ -16,7 +14,7 @@ multipush(EIP);
 
 //if cause of exception is illegal instruction
 if(EC == 1) then
-	print "IllegalInst";
+	//print "IllegalInst";
 	//print "************";
 	backup;
 	R1 = EXIT_PROCESS;
@@ -28,7 +26,7 @@ endif;
 
 //cause of exception is illegal memory access
 if(EC == 2) then
-	print "IllegalMemAccess";
+	//print "IllegalMemAccess";
 	//print "************";
 	backup;
 	R1 = EXIT_PROCESS;
@@ -52,7 +50,7 @@ endif;
 
 //page fault
 if(EC == 0) then
-	print "PageFault!";
+	//print "PageFault!";
 	//print EPN;
 	//print "************";
 	if((EPN == 4) || (EPN == 5) || (EPN == 6) || (EPN == 7)) then
@@ -65,24 +63,24 @@ if(EC == 0) then
 		restore;
 	endif;
 	if((EPN == 2) || (EPN == 3)) then
+		//backup;
+		//R1 = GET_FREE_PAGE;
+		//call MOD_2;
+		//[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + 1] * 20) + (2 * EPN)] = R0;
+		//[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + 1] * 20) + (2 * EPN) + 1] = "1110";
+		//restore;
 		backup;
 		R1 = GET_FREE_PAGE;
 		call MOD_2;
-		[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + 1] * 20) + (2 * EPN)] = R0;
-		[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + 1] * 20) + (2 * EPN) + 1] = "1110";
+		[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + 1] * 20) + 4] = R0;
+		[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + 1] * 20) + 5] = "1110";
 		restore;
-		//backup;
-		//R1 = GET_FREE_PAGE;
-		//call MOD_2;
-		//[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + 1] * 20) + 4] = R0;
-		//[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + 1] * 20) + 5] = "1110";
-		//restore;
-		//backup;
-		//R1 = GET_FREE_PAGE;
-		//call MOD_2;
-		//[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + 1] * 20) + 6] = R0;
-		//[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + 1] * 20) + 7] = "1110";
-		//restore;
+		backup;
+		R1 = GET_FREE_PAGE;
+		call MOD_2;
+		[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + 1] * 20) + 6] = R0;
+		[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + 1] * 20) + 7] = "1110";
+		restore;
 	endif;
 endif;
 

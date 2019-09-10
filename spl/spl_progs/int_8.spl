@@ -115,6 +115,8 @@ while(i < 512) do
 	i = i + 2;
 endwhile;
 
+breakpoint;
+
 //copy parent per-process_disk_map_table to child
 i = 0;
 while(i < 10) do

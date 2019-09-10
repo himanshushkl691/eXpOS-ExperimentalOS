@@ -1,0 +1,120 @@
+//--------------------------------------INTERRUPT 14 MODULE-----------------------------------
+
+alias sys_call_num R0;
+alias userSP R1;
+alias currPID R2;
+alias curr_process_table R3;
+userSP = SP;
+currPID = [SYSTEM_STATUS_TABLE + 1];
+curr_process_table = PROCESS_TABLE + (currPID * 16);
+sys_call_num = [[PTBR + 2 * ((userSP - 5) / 512)] * 512 + ((userSP - 5) % 512)];
+[curr_process_table + 13] = SP;
+SP = [curr_process_table + 11] * 512 - 1;
+
+//--------------SemLock System Call(19)(final)-------------
+if(sys_call_num == 19) then
+	alias semaphore_descriptor R4;
+	alias user_area_page R5;
+	semaphore_descriptor = [[PTBR + 2 * ((userSP - 4) / 512)] * 512 + ((userSP - 4) % 512)];
+	user_area_page = [curr_process_table + 11];
+	
+	//set mode flag in process table to semlock syscall
+	[curr_process_table + 9] = sys_call_num;
+
+	//failure if semaphore descriptor is not valid	
+	if((semaphore_descriptor < 0) || (semaphore_descriptor > 7) || ([user_area_page * 512 + 496 + 2 * semaphore_descriptor] == -1)) then
+		[curr_process_table + 9] = 0;
+		[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + ((userSP - 1) % 512)] = -1;
+		SP = userSP;
+		ireturn;
+	endif;
+	
+	//if semaphore descriptor is valid
+	alias semid R6;
+	semid = [user_area_page * 512 + 496 + 2 * semaphore_descriptor + 1];
+
+	//while semaphore is locked by another process, current process must wait
+	while([SEMAPHORE_TABLE + (4 * semid)] != -1)	 do
+		//change the state of current process to (WAIT_SEMAPHORE,semid)
+		[curr_process_table + 4] = WAIT_SEMAPHORE;
+		[curr_process_table + 5] = semid;
+		
+		//call scheduler
+		backup;
+		call MOD_5;
+		restore;
+	endwhile;
+	
+	//reaches here when semaphore is free
+
+	//change locking_pid from -1 to currPID
+	[SEMAPHORE_TABLE + (4 * semid)] = currPID;
+
+	//return 0 for success in user stack success :)
+	[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + ((userSP - 1) % 512)] = 0;
+
+	//change mode back to user
+	[curr_process_table + 9] = 0;
+	SP = userSP;
+
+	ireturn;
+endif;
+//---------------------------------------------------------
+
+//-----------SemUnLock System Call(20)(final)--------------
+if(sys_call_num == 20) then
+	alias semaphore_descriptor R4;
+	alias user_area_page R5;
+	semaphore_descriptor = [[PTBR + 2 * ((userSP - 4) / 512)] * 512 + ((userSP - 4) % 512)];
+	user_area_page = [curr_process_table + 11];
+	
+	//set mode flag to semunlock syscall
+	[curr_process_table + 9] = sys_call_num;
+
+	//failure(invalid)
+	if((semaphore_descriptor<0) || (semaphore_descriptor>7) || ([user_area_page * 512 + 496 + 2*semaphore_descriptor]==-1))then
+		[curr_process_table + 9] = 0;
+		SP = userSP;
+		[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + ((userSP - 1) % 512)] = -1;
+		ireturn;
+	endif;
+	
+	alias semid R6;
+	semid = [user_area_page * 512 + 496 + 2 * semaphore_descriptor + 1];
+	
+	//locked
+	if([SEMAPHORE_TABLE + (4 * semid)] != -1) then
+		if([SEMAPHORE_TABLE + (4 * semid)] != currPID) then
+			//if locked by some other process return -2 failure :(
+			[curr_process_table + 9] = 0;
+			[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + ((userSP - 1) % 512)] = -2;
+			SP = userSP;
+			ireturn;
+		endif;
+
+		//unlock the semaphore
+		//set locking_pid to -1
+		[SEMAPHORE_TABLE + (4 * semid)] = -1;
+		//change state of all process from (wait_semaphore,semid) to (ready,_);
+		alias i R7;
+		i = 0;
+		while(i < 16) do
+			alias temp_pt R8;
+			temp_pt = PROCESS_TABLE + (i * 16);
+			if(([temp_pt + 4] == WAIT_SEMAPHORE) && ([temp_pt + 5] == semid)) then
+				[temp_pt + 4] = READY;
+			endif;
+			i = i + 1;
+		endwhile;	
+	endif;
+	
+	//return 0 in user stack success :)
+	[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + ((userSP - 1) % 512)] = 0;
+	//reset mode flag back to user
+	[curr_process_table + 9] = 0;
+	SP = userSP;
+	ireturn;
+endif;
+//---------------------------------------------------------
+
+//--------------------------------------------------------------------------------------------

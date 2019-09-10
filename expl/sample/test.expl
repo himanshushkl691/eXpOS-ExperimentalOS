@@ -4,12 +4,7 @@ int main()
 		int ret,n,i;
 	enddecl
 	begin
-		ret = exposcall("Read",-1,n);
-		i = 2;
-		while(i <= n) do
-			ret = exposcall("Write",-2,i);
-			i = i + 2;
-		endwhile;
+		ret = 32/0;
 		return 0;
 	end
 }

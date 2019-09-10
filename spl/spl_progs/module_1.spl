@@ -1,11 +1,27 @@
-//--------------------PROCESS MANAGER MODULE------------------
+//---------------------------------------PROCESS MANAGER MODULE----------------------------------------
 alias funcNum R1;
 alias currPID R2;
 
-//----------Free User Area Page--------
+//--------------Free User Area Page---------------
 if(funcNum == FREE_USER_AREA_PAGE) then
 	alias userAreaPageNum R3;
+	alias i R4;
 	userAreaPageNum = [PROCESS_TABLE + (currPID * 16) + 11];
+	
+	//for every valid semaphore entry invoke release_semaphore()
+	i = 0;
+	while(i < 8) do
+		if([userAreaPageNum * 512 + i + 496] == SEMAPHORE) then
+			backup;
+			R1 = RELEASE_SEMAPHORE;
+			R2 = currPID;					
+			R3 = [userAreaPageNum * 512 + 496 + i + 1];	//semid
+			call MOD_0;
+			restore;
+		endif;
+		i = i + 2;
+	endwhile;
+
 	backup;
 	R1 = RELEASE_PAGE;
 	R2 = userAreaPageNum;
@@ -16,7 +32,7 @@ if(funcNum == FREE_USER_AREA_PAGE) then
 	restore;
 	return;
 endif;
-//-------------------------------------
+//------------------------------------------------
 
 //--------Exit Process(final)----------
 if(funcNum == EXIT_PROCESS) then
@@ -116,4 +132,4 @@ if(funcNum == GET_PCB_ENTRY) then
 endif;
 //-------------------------------------
 return;
-//------------------------------------------------------------
+//-----------------------------------------------------------------------------------------------------

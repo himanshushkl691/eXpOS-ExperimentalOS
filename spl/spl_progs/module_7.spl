@@ -30,6 +30,14 @@ loadi(23,36);
 loadi(24,37);
 loadi(25,38);
 
+//load INT_13 module
+loadi(28,41);
+loadi(29,42);
+
+//load INT_14 module
+loadi(30,43);
+loadi(31,44);
+
 //load INT_15 module
 loadi(32,45);
 loadi(33,46);
@@ -95,6 +103,14 @@ while(i < 128) do
 		[MEMORY_FREE_LIST + i] = 0;
 		cnt = cnt + 1;
 	endif;
+	i = i + 1;
+endwhile;
+
+//initialize semaphore table by setting process_count to 0 and locking_pid to -1
+i = 0;
+while(i < MAX_SEM_COUNT) do
+	[SEMAPHORE_TABLE + (4 * i)] = -1;	//locking pid
+	[SEMAPHORE_TABLE + (4 * i) + 1] = 0;	//process count
 	i = i + 1;
 endwhile;
 

@@ -11,7 +11,7 @@ sys_call_num = [[PTBR + 2 * ((userSP - 5) / 512)] * 512 + ((userSP - 5) % 512)];
 [PROCESS_TABLE + (currPID * 16) + 13] = SP;
 SP = [PROCESS_TABLE + (currPID * 16) + 11] * 512 - 1;
 
-//------------Semget System Call(17)-------------
+//------------Semget System Call(17)(final)-------------
 if(sys_call_num == 17) then
 	alias i R3;
 	alias userAreaPage R4;
@@ -54,7 +54,7 @@ if(sys_call_num == 17) then
 	//if there are no free semaphore!
 	if(newSemaphore == -1) then
 		[PROCESS_TABLE + (currPID * 16) + 9] = 0;
-		[[PTBR + 2 * ((userSP - 1) / 512)] + ((userSP - 1) % 512)] = -2;
+		[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + ((userSP - 1) % 512)] = -2;
 		SP = userSP;
 		ireturn;
 	endif;
@@ -66,12 +66,12 @@ if(sys_call_num == 17) then
 	[PROCESS_TABLE + (currPID * 16) + 9] = 0;
 	
 	//set return value as per-process resource table entry index
-	[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + ((userSP - 1) % 512)] = (freeEntry - 496) / 512;
+	[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + ((userSP - 1) % 512)] = (freeEntry - 496) / 2;
 	ireturn;
 endif;
-//-----------------------------------------------
+//----------------------------------------------------
 
-//------------Semrelease System Call(18)---------
+//------------Semrelease System Call(18)(final)-------
 if(sys_call_num == 18) then
 	alias semaphoreDescriptor R3;
 	alias userAreaPage R4;
@@ -87,16 +87,12 @@ if(sys_call_num == 18) then
 		ireturn;		
 	endif;
 
-	multipush(R0,R1,R2,R3,R4);
+	backup;
 	R1 = RELEASE_SEMAPHORE;
 	R2 = currPID;
 	R3 = [userAreaPage * 512 + 2 * semaphoreDescriptor + 496 + 1];
 	call MOD_0;
-	if(R0 == -1) then
-		print "InvSemDesc";
-	endif;
-	multipop(R0,R1,R2,R3,R4);
-
+	restore;
 	//invalidate per-process resource table entry
 	[userAreaPage * 512 + 2 * semaphoreDescriptor + 496] = -1;
 	//return value
@@ -106,6 +102,6 @@ if(sys_call_num == 18) then
 	SP = userSP;
 	ireturn;
 endif;
-//-----------------------------------------------
+//----------------------------------------------------
 
 //------------------------------------------------------------------------------------------

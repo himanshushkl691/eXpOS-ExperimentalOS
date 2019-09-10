@@ -1,8 +1,8 @@
-//-------------RESOURCE MANAGER MODULE-----------
+//--------------------------------------RESOURCE MANAGER MODULE---------------------------------------------
 alias funcNum R1;
 alias currPID R2;
 
-//------------ACQUIRING TERMINAL---------
+//------------ACQUIRING TERMINAL------------
 if(funcNum == ACQUIRE_TERMINAL) then
 	
 	//-------wait till terminal is released------
@@ -18,9 +18,9 @@ if(funcNum == ACQUIRE_TERMINAL) then
 	[TERMINAL_STATUS_TABLE+1]=currPID;	//set PID field in terminal_status_table
 	return;
 endif;
-//--------------------------------------
+//------------------------------------------
 
-//----------RELEASING TERMINAL----------
+//----------RELEASING TERMINAL--------------
 if(funcNum == RELEASE_TERMINAL) then
 	if(currPID != [TERMINAL_STATUS_TABLE+1]) then
 		R0 = -1;
@@ -40,9 +40,9 @@ if(funcNum == RELEASE_TERMINAL) then
 		return;
 	endif;
 endif;
-//-------------------------------------
+//-------------------------------------------
 
-//---------ACQUIRE DISK(final)---------
+//---------Acquire Disk(final)---------------
 if(funcNum == ACQUIRE_DISK) then
 	while ([DISK_STATUS_TABLE] == 1) do
 		[PROCESS_TABLE + (currPID * 16) + 4] = WAIT_DISK;
@@ -54,4 +54,58 @@ if(funcNum == ACQUIRE_DISK) then
 	[DISK_STATUS_TABLE + 4] = currPID;	//set PID field
 	return;
 endif;
-//-------------------------------------
+//--------------------------------------------
+
+//--------Acquire Semaphore(final)------------
+if(funcNum == ACQUIRE_SEMAPHORE) then
+	alias freeEntry R3;
+	alias i R4;
+	freeEntry = -1;
+	i = 0;
+	while(i < MAX_SEM_COUNT) do
+		if([SEMAPHORE_TABLE + (i * 4) + 1] == 0) then	//if Process_Count is 0 then semaphore is free
+			freeEntry = i;
+			break;
+		endif;
+		i = i + 1;
+	endwhile;
+
+	if(freeEntry == -1) then
+		R0 = -1;
+		return;
+	endif;
+
+	[SEMAPHORE_TABLE + (freeEntry * 4) + 1] = 1;	//set Process_Count to 1
+	[SEMAPHORE_TABLE + (freeEntry * 4)] = -1;	//set Locking_PID to -1
+
+	R0 = freeEntry;
+	return;
+endif;
+//--------------------------------------------
+
+//-----------Release Semaphore(final)---------
+if(funcNum == RELEASE_SEMAPHORE) then
+	alias semid R3;
+	alias i R4;
+	//check locking_pid of semaphore it should be equal to currPID
+	if([SEMAPHORE_TABLE + (4 * semid)] == currPID) then
+		//set Locking_PID to -1
+		[SEMAPHORE_TABLE + (4 * semid)] = -1;
+		i = 0;
+		while(i < 16) do
+			if(([PROCESS_TABLE + (i * 16) + 4] == WAIT_SEMAPHORE) && ([PROCESS_TABLE + (i * 16) + 5] == semid)) then
+				[PROCESS_TABLE + (i * 16) + 4] = READY;
+			endif;
+			i = i + 1;
+		endwhile;
+		//decrement process_count of semaphore in semaphore table,if process_count is 0 semaphore is free
+		[SEMAPHORE_TABLE + (semid * 4) + 1] = [SEMAPHORE_TABLE + (semid * 4) + 1] - 1;
+		R0 = 0;
+	else
+		R0 = -1;
+	endif;
+	return;
+endif;
+//------------------------------------------
+
+//----------------------------------------------------------------------------------------------------------
