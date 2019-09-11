@@ -22,7 +22,8 @@ if(sys_call_num == 19) then
 	[curr_process_table + 9] = sys_call_num;
 
 	//failure if semaphore descriptor is not valid	
-	if((semaphore_descriptor < 0) || (semaphore_descriptor > 7) || ([user_area_page * 512 + 496 + 2 * semaphore_descriptor] == -1)) then
+	if((semaphore_descriptor < 0) || (semaphore_descriptor > 7) || ([user_area_page * 512 + 496 + 2 * semaphore_descriptor]!=1))
+then
 		[curr_process_table + 9] = 0;
 		[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + ((userSP - 1) % 512)] = -1;
 		SP = userSP;
@@ -72,7 +73,7 @@ if(sys_call_num == 20) then
 	[curr_process_table + 9] = sys_call_num;
 
 	//failure(invalid)
-	if((semaphore_descriptor<0) || (semaphore_descriptor>7) || ([user_area_page * 512 + 496 + 2*semaphore_descriptor]==-1))then
+	if((semaphore_descriptor<0) || (semaphore_descriptor>7) || ([user_area_page * 512 + 496 + 2*semaphore_descriptor]!=1))then
 		[curr_process_table + 9] = 0;
 		SP = userSP;
 		[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + ((userSP - 1) % 512)] = -1;
