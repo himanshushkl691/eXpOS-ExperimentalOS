@@ -1,47 +1,150 @@
-//------------INTERRUPT 6 MODULE---------
+//---------------------------------------------INTERRUPT 6 MODULE------------------------------------------------------
 
-//-----------READ SYSTEM CALL-----------
-//change mode_flag of curr_proc to 7(read sys_call)
-[PROCESS_TABLE+([SYSTEM_STATUS_TABLE+1]*16)+9]=7;
-
-alias userSP R0;
-userSP = SP;
-
-[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 13] = SP;
-SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] * 512 - 1;
-
-alias physical_page R1;
-alias offset R2;
+//--------------------Read System Call(7)(final)---------------
+alias currPID R0;
+alias userSP R1;
+alias process_table R2;
 alias file_descriptor R3;
+alias ret R4;
+alias content_addr R5;
 
-//getting file descriptor
-physical_page = [PTBR + 2 * ((userSP - 4) / 512)];
-offset = (userSP - 4) % 512;
-file_descriptor = [physical_page * 512 + offset];
-if(file_descriptor != -1) then
-	[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + ((userSP - 1) % 512)] = -1;
-else
-	alias content_addr R4;
-	physical_page = [PTBR + 2 * ((userSP - 3) / 512)];
-	offset = (userSP - 3) % 512;
-	content_addr = [physical_page * 512 + offset];
+currPID = [SYSTEM_STATUS_TABLE + 1];
+userSP = SP;
+process_table = PROCESS_TABLE + (16 * currPID);
+file_descriptor = [[PTBR + 2 * ((userSP - 4) / 512)] * 512 + (userSP - 4) % 512];
+content_addr = [[PTBR + 2 * ((userSP - 3) / 512)] * 512 + (userSP - 3) % 512];
+ret = [PTBR + 2 * ((userSP - 1) / 512)] * 512 + (userSP - 1) % 512;
 
+[process_table + 9] = 7;
+
+[process_table + 13] = SP;
+SP = [process_table + 11] * 512 - 1;
+
+if(file_descriptor == -1) then
+	//read from terminal
 	backup;	
-	R1 = 4;				//TERMINAL READ = 4
-	R2 = [SYSTEM_STATUS_TABLE + 1];	//curr_proc pid
+	R1 = 4;				//TERMINAL READ
+	R2 = currPID;			//curr_proc pid
 	R3 = content_addr;		//address of word
 	call MOD_4;			//device manager module
 	restore;
+else
+	//read from file
+	//if file descriptor is invalid :(
+	if((file_descriptor < 0) || (file_descriptor > 7)) then
+		[ret] = -1;
+		[process_table + 9] = 0;
+		SP = userSP;
+		ireturn;
+	endif;
+	alias resource_table R6;
+	resource_table = [process_table + 11] * 512 + 496;
+	
+	//if identifier is not FILE, no file associated with this descriptor :(
+	if([resource_table + (2 * file_descriptor)] != FILE) then
+		[ret] = -1;
+		[process_table + 9] = 0;
+		SP = userSP;
+		ireturn;
+	endif;
 
-	[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + ((userSP - 1) % 512)] = 0;	//success
+	alias open_file_entry R7;
+	alias inode R8;
+	open_file_entry = [resource_table + (2 * file_descriptor) + 1];
+	inode = [OPEN_FILE_TABLE + (4 * open_file_entry)];
+
+	//acquire_inode() in resource manager
+	backup;
+	R1 = ACQUIRE_INODE;
+	R2 = currPID;
+	R3 = inode;
+	call MOD_0;
+	//if acquiring fails :(
+	if(R0 == -1) then
+		restore;
+		[ret] = -1;
+		[process_table + 9] = 0;
+		SP = userSP;
+		ireturn;
+	endif;
+	restore;
+
+	alias lseek R9;
+	alias physical_addr R10;
+	alias open_file_table R11;
+	
+	open_file_table = OPEN_FILE_TABLE + (4 * open_file_entry);
+	lseek = [open_file_table + 2];
+	physical_addr = [PTBR + 2 * (content_addr / 512)] * 512 + (content_addr) % 512;
+
+	if(inode == INODE_ROOT) then
+		//if lseek is equal to root file size :(
+		if(lseek == 480) then
+			backup;
+			R1 = RELEASE_INODE;
+			R2 = currPID;
+			R3 = inode;
+			call MOD_0;
+			restore;
+			[ret] = -2;
+			[process_table + 9] = 0;
+			SP = userSP;
+			ireturn;
+		endif;
+
+		//read from word at lseek position in memory copy of root_file to translated memory address
+		[physical_addr]	= [ROOT_FILE + lseek];	
+
+		//increment lseek position in open_file_table
+		[open_file_table + 2] = [open_file_table + 2] + 1;
+	else
+		//if lseek is same as size of file :(
+		if(lseek == [INODE_TABLE + (16 * inode) + 2]) then
+			backup;
+			R1 = RELEASE_INODE;
+			R2 = currPID;
+			R3 = inode;
+			call MOD_0;
+			restore;
+			[ret] = -2;
+			[process_table + 9] = 0;
+			SP = userSP;
+			ireturn;
+		endif;
+		
+		alias disk_block_num R12;
+		alias offset R13;
+		disk_block_num = [INODE_TABLE + (16 * inode) + 8 + (lseek / 512)];
+		offset = lseek % 512;
+
+		//read data from file buffer by calling buffered_read() in file_manager
+		backup;
+		R1 = BUFFERED_READ;
+		R2 = disk_block_num;
+		R3 = offset;
+		R4 = physical_addr;
+		call MOD_3; 
+		restore;
+
+		//increment lseek value in open_file_table
+		[open_file_table + 2] = [open_file_table + 2] + 1;
+	endif;
+	
+	//release_inode()
+	backup;
+	R1 = RELEASE_INODE;
+	R2 = currPID;
+	R3 = inode;
+	call MOD_0;
+	restore;
 endif;
 
-[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 9] = 0;	//user mode
-
-SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 13];
+//success :)
+[ret] = 0;
+[process_table + 9] = 0;
+SP = userSP;
 
 ireturn;
+//-------------------------------------------------------------
 
-//--------------------------------------
-
-//---------------------------------------
+//---------------------------------------------------------------------------------------------------------------------

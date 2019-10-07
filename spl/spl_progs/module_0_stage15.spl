@@ -165,4 +165,53 @@ if(funcNum == RELEASE_INODE) then
 endif;
 //------------------------------------------
 
+//---------Acquire Buffer(1)(final)---------
+if(funcNum == ACQUIRE_BUFFER) then
+	alias buffer_num R3;
+	while([BUFFER_TABLE + (4 * buffer_num) + 2] != -1) do
+		[PROCESS_TABLE + (16 * currPID) + 4] = WAIT_BUFFER;
+		[PROCESS_TABLE + (16 * currPID) + 5] = buffer_num;
+		backup;
+		call MOD_5;
+		restore;
+	endwhile;
+
+	//lock buffer by setting lock pid to currPID
+	[BUFFER_TABLE + (4 * buffer_num) + 2] = currPID;
+	return;
+endif;
+//------------------------------------------
+
+//---------Release Buffer(2)(final)---------
+if(funcNum == RELEASE_BUFFER) then
+	alias buffer_num R3;
+	
+	//if given pid not equal to locking pid :(
+	if(currPID != [BUFFER_TABLE + (4 * buffer_num) + 2]) then
+		R0 = -1;
+		return;
+	endif;
+
+	//free the lock in buffer table in given buffer_num entry, set locking pid to -1
+	[BUFFER_TABLE + (4 * buffer_num) + 2] = -1;
+
+	//wake up all process waiting for this buffer
+	alias i R4;
+	i = 0;
+	while(i < 16) do
+		alias process_table R5;
+		process_table = PROCESS_TABLE + (i * 16);
+		if(([process_table + 4] == WAIT_BUFFER) && ([process_table + 5] == buffer_num)) then
+			[process_table + 4] = READY;
+		endif;
+		i = i + 1;
+	endwhile;
+	
+	//success :)
+	R0 = 0;
+	return;
+endif;
+//------------------------------------------
+
+return;
 //----------------------------------------------------------------------------------------------------------

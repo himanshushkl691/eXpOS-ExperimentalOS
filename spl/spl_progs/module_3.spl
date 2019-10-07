@@ -1,0 +1,215 @@
+//------------------------------------------FILE MANAGER (MODULE 3)--------------------------------------------------
+
+alias funcNum R1;
+
+//-----------------Open(3)(final)----------------
+if(funcNum == OPEN) then
+	alias filename R2;
+	alias i R3;
+	alias inode R4;
+	alias inode_entry R5;
+	alias open_file_entry R6;
+
+	//search inode table for file
+	inode = -1;
+	i = 0;
+	while(i < MAX_FILE_NUM) do
+		if([INODE_TABLE + (i * 16) + 1] == filename) then
+			inode = i;
+			break;
+		endif;
+		i = i + 1;
+	endwhile;
+	
+	//if entry not found :(
+	if(inode == -1) then
+		R0 = -1;
+		return;
+	endif;
+	
+	//acquire inode by calling acquire_inode() in resource manager
+	backup;
+	R1 = ACQUIRE_INODE;
+	R2 = [SYSTEM_STATUS_TABLE + 1];
+	R3 = inode;
+	call MOD_0;
+	//if locking fails :(
+	if(R0 == -1) then
+		restore;
+		R0 = -1;
+		return;
+	endif;
+	restore;
+
+	inode_entry = INODE_TABLE + (16 * inode);
+
+	//if file is of EXEC type return -1 :(
+	if([inode_entry] == EXEC) then
+		//release_inode()
+		backup;
+		R1 = RELEASE_INODE;
+		R2 = [SYSTEM_STATUS_TABLE + 1];
+		R3 = inode;
+		call MOD_0;
+		restore;
+		//return
+		R0 = -1;
+		return;
+	endif;
+
+	//search free open_file_entry in OPEN_FILE_TABLE
+	i = 0;
+	open_file_entry = -1;
+	while(i < MAX_OPENFILE_NUM) do
+		//check inode index field
+		if([OPEN_FILE_TABLE + (4 * i)] == -1) then
+			open_file_entry = i;
+			break;
+		endif;
+		i = i + 1;
+	endwhile;
+
+	//if no free open file entry :(
+	if(open_file_entry == -1) then
+		//release_inode()
+		backup;
+		R1 = RELEASE_INODE;
+		R2 = [SYSTEM_STATUS_TABLE + 1];
+		R3 = inode;
+		call MOD_0;
+		restore;
+		R0 = -2;
+		return;
+	endif;
+
+	open_file_entry = OPEN_FILE_TABLE + (4 * open_file_entry);
+
+	//if file name is "root" set inode_idx to INODE_ROOT(0)
+	if(filename == "root") then
+		[open_file_entry] = INODE_ROOT;
+	else
+		//otherwise if opened for first time make it to 1
+		if([FILE_STATUS_TABLE + (4 * inode) + 1] == -1) then
+			[FILE_STATUS_TABLE + (4 * inode) + 1] = 1;
+		else
+			//otherwise increment
+			[FILE_STATUS_TABLE + (4 * inode) + 1] = [FILE_STATUS_TABLE + (4 * inode) + 1] + 1;
+		endif;
+		//set inode_index field to inode_idx found above
+		[open_file_entry] = inode;
+	endif;
+
+	[open_file_entry + 1] = 1;	//open_instance_count to 1
+	[open_file_entry + 2] = 0;	//lseek to 0
+
+	//release_inode()
+	backup;
+	R1 = RELEASE_INODE;
+	R2 = [SYSTEM_STATUS_TABLE + 1];
+	R3 = inode;
+	call MOD_0;
+	restore;
+
+	//return open_file_entry_index
+	R0 = (open_file_entry - OPEN_FILE_TABLE) / 4;
+	return;
+endif;
+//-----------------------------------------------
+
+//-------------Close(4)(final)-------------------
+if(funcNum == CLOSE) then
+	alias open_file_entry R2;
+	alias inode R3;
+	alias open_file R4;
+	alias file_status R5;
+
+	open_file = OPEN_FILE_TABLE + (4 * open_file_entry);
+	inode = [open_file];
+	file_status = FILE_STATUS_TABLE + (4 * inode);
+
+	//decrement the open instance count
+	[open_file + 1] = [open_file + 1] - 1;
+	
+	//if open instance count becomes 0 invalidate entry by setting all fields to -1
+	if([open_file + 1] == 0) then
+		[open_file] = -1;		//inode_idx
+		[open_file + 1] = -1;		//open instance count
+		[open_file + 2] = -1;		//lseek
+		[open_file + 3] = -1;		//unused
+		//if file is not "root" decrement file open count in file_status_table
+		if(inode != INODE_ROOT) then
+			[file_status + 1] = [file_status + 1] - 1;
+		endif;
+		//if file open count becomes 0 set it to -1
+		if([file_status + 1] == 0) then
+			[file_status + 1] = -1;
+		endif;
+	endif;
+	return;
+endif;
+//-----------------------------------------------
+
+//-----------Buffered Read(2)(final)-------------
+if(funcNum == BUFFERED_READ) then
+	alias disk_block_num R2;
+	alias offset R3;
+	alias physical_memory_addr R4;
+	alias buffer_num R5;
+	alias buffer_table R6;
+
+	buffer_num = disk_block_num % 4;
+	buffer_table = BUFFER_TABLE + (4 * buffer_num);
+
+	//acquire_buffer() in resource manager
+	backup;
+	R1 = ACQUIRE_BUFFER;
+	R2 = [SYSTEM_STATUS_TABLE + 1];
+	R3 = buffer_num;
+	call MOD_0;
+	restore;
+
+	//if buffer is allocated by another disk_block
+	if([buffer_table] != disk_block_num) then
+		//check dirty bits for changes to be copied back
+		if([buffer_table + 1] == 1) then
+			backup;
+			R1 = DISK_STORE;
+			R2 = [SYSTEM_STATUS_TABLE + 1];
+			R3 = buffer_num + 71;
+			R4 = [buffer_table];
+			call MOD_4;
+			restore;
+			
+			[buffer_table + 1] = 0;
+			//buffer is clean now denoted by buffer_num
+		endif;
+		
+		//load buffer with given disk_block_num
+		backup;
+		R1 = DISK_LOAD;			//disk_load()
+		R4 = disk_block_num;		//block number
+		R2 = [SYSTEM_STATUS_TABLE + 1];	//current pid
+		R3 = buffer_num + 71;		//page number
+		call MOD_4;
+		restore;
+		//set block number of buffer to given disk_block_number
+		[buffer_table] = disk_block_num;
+	endif;
+	
+	//copy contents at offset in buffer to given physical_memory_addr
+	[physical_memory_addr] = [(71 + buffer_num) * 512 + offset];
+	
+	//release_buffer() in resource manager
+	backup;
+	R1 = RELEASE_BUFFER;
+	R2 = [SYSTEM_STATUS_TABLE + 1];
+	R3 = buffer_num;
+	call MOD_0;
+	restore;
+
+	return;
+endif;
+//-----------------------------------------------
+
+return;
+//-------------------------------------------------------------------------------------------------------------------

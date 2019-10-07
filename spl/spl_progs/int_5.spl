@@ -1,0 +1,130 @@
+//-------------------------------------------INTERRUPT 5 MODULE-----------------------------------------
+
+//extract info from user stack
+alias currPID R0;
+alias userSP R1;
+alias process_table R2;
+alias ret R3;
+alias sys_call_num R4;
+userSP = SP;
+currPID = [SYSTEM_STATUS_TABLE + 1];
+process_table = PROCESS_TABLE + (16 * currPID);
+ret = [PTBR + 2 * ((userSP - 1) / 512)] * 512 + (userSP - 1) % 512;
+sys_call_num = [[PTBR + 2 * ((userSP - 5) / 512)] * 512 + (userSP - 5) % 512];
+[process_table + 13] = SP;
+SP = [process_table + 11] * 512 - 1;
+
+//------------------Open System Call(2)(final)-----------------
+if(sys_call_num == 2) then
+	alias i R5;
+	alias resource_table R6;
+	alias filename R7;
+	alias open_file_entry R8;
+
+	resource_table = [process_table + 11] * 512 + 496;
+	filename = [[PTBR + 2 * ((userSP - 4) / 512)] * 512 + (userSP - 4) % 512];
+	[process_table + 9] = sys_call_num;
+
+	//find free per-process resource index
+	i = 0;
+	while(i < 8) do
+		if([resource_table + (2 * i)] == -1) then
+			break;		
+		endif;
+		i = i + 1;
+	endwhile;
+
+	//if no entry return -3 :(
+	if(i == 8) then
+		[ret] = -3;
+		[process_table + 9] = 0;
+		SP = userSP;
+		ireturn;
+	endif;
+
+	//call open() from file manager module to get open file table entry
+	multipush(R0,R1,R2,R3,R4,R5,R6,R7,R9);
+	R1 = OPEN;
+	R2 = filename;
+	call MOD_3;
+	open_file_entry = R0;
+	multipop(R0,R1,R2,R3,R4,R5,R6,R7,R9);
+	
+	//if file not found or file is not data or root file :(
+	if(open_file_entry == -1) then
+		[ret] = -1;
+		[process_table + 9] = 0;
+		SP = userSP;
+		ireturn;
+	endif;
+
+	//if system has reached its limit of open files :(
+	if(open_file_entry == -2) then
+		[ret] = -2;
+		[process_table + 9] = 0;
+		SP = userSP;
+		ireturn;
+	endif;
+	
+	//set per-process resource table
+	[resource_table + (2 * i)] = FILE;			//identifier
+	[resource_table + (2 * i) + 1] = open_file_entry;	//free open file entry
+	
+	//success :)
+	[process_table + 9] = 0;
+	[ret] = i;
+	SP = userSP;
+	ireturn;
+endif;
+//-------------------------------------------------------------
+
+//------------------Close System Call(3)(final)----------------
+if(sys_call_num == 3) then
+	alias i R5;
+	alias file_descriptor R6;
+	alias resource_table R7;
+	alias open_file_entry R8;
+
+	resource_table = [process_table + 11] * 512 + 496;
+	[process_table + 9] = sys_call_num;
+	file_descriptor = [[PTBR + 2 * ((userSP - 4) / 512)] * 512 + (userSP - 4) % 512];
+	
+	//if file descriptor is invalid :(
+	if((file_descriptor < 0) || (file_descriptor > 7)) then
+		[ret] = -1;
+		[process_table + 9] = 0;
+		SP = userSP;
+		ireturn;
+	endif;
+
+	//if file_descriptor does not belong to file :(
+	if(([resource_table + (2 * file_descriptor)] != FILE) || ([resource_table + (2 * file_descriptor)] == -1)) then
+		[ret] = -1;
+		[process_table + 9] = 0;
+		SP = userSP;
+		ireturn;
+	endif;
+
+	//get open_file_table_entry
+	open_file_entry = [resource_table + (2 * file_descriptor) + 1];
+
+	//call close() function in file_manager_module
+	backup;
+	R1 = CLOSE;
+	R2 = open_file_entry;
+	call MOD_3;
+	restore;
+
+	//invalidate per-process resource table entry
+	[resource_table + (2 * file_descriptor)] = -1;
+	[resource_table + (2 * file_descriptor) + 1] = -1;
+
+	//success :)
+	[ret] = 0;
+	[process_table + 9] = 0;
+	SP = userSP;
+	ireturn;
+endif;
+//-------------------------------------------------------------
+
+//------------------------------------------------------------------------------------------------------

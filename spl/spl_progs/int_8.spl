@@ -1,6 +1,6 @@
 //-------------------------------INTERRUPT 8 MODULE-------------------------------
 
-//---------------Fork System Call(8)------------------
+//------------Fork System Call(8)(final)--------------
 [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 9] = 8;		//change mode_flag to fork_sys_call
 [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 13] = SP;		//save userSP of parent process
 SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] * 512 - 1;	//user area page
@@ -106,16 +106,17 @@ while(i < 512) do
 	[child_user_area_page * 512 + i] = [parent_user_area_page * 512 + i];
 	[child_user_area_page * 512 + i + 1] = [parent_user_area_page * 512 + i + 1];
 	temp = [parent_user_area_page * 512 + i + 1];
+	//increment process_count
 	if([parent_user_area_page * 512 + i] == SEMAPHORE) then
 		[SEMAPHORE_TABLE + (4 * temp) + 1] = [SEMAPHORE_TABLE + (4 * temp) + 1] + 1;
 	endif;
+	//increment open_instance_count
 	if([parent_user_area_page * 512 + i] == FILE) then
 		[OPEN_FILE_TABLE + (4 * temp) + 1] = [OPEN_FILE_TABLE + (4 * temp) + 1] + 1;
 	endif;
 	i = i + 2;
 endwhile;
 
-breakpoint;
 
 //copy parent per-process_disk_map_table to child
 i = 0;

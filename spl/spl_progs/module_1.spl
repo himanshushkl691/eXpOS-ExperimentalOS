@@ -2,7 +2,7 @@
 alias funcNum R1;
 alias currPID R2;
 
-//--------------Free User Area Page---------------
+//-----------Free User Area Page(final)-----------
 if(funcNum == FREE_USER_AREA_PAGE) then
 	alias userAreaPageNum R3;
 	alias i R4;
@@ -17,6 +17,13 @@ if(funcNum == FREE_USER_AREA_PAGE) then
 			R2 = currPID;					
 			R3 = [userAreaPageNum * 512 + 496 + i + 1];	//semid
 			call MOD_0;
+			restore;
+		endif;
+		if([userAreaPageNum * 512 + i + 496] == FILE) then
+			backup;
+			R1 = CLOSE;
+			R2 = [userAreaPageNum * 512 + 496 + i + 1];	//open_file_table_index
+			call MOD_3; 
 			restore;
 		endif;
 		i = i + 2;
