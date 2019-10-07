@@ -108,4 +108,61 @@ if(funcNum == RELEASE_SEMAPHORE) then
 endif;
 //------------------------------------------
 
+//---------Acquire Inode(4)(final)----------
+if(funcNum == ACQUIRE_INODE) then
+	alias inode_idx R3;
+	alias process_table R4;
+	process_table = PROCESS_TABLE + (16 * currPID);
+	//wait for inode to be freed by another process
+	while([FILE_STATUS_TABLE + 4 * (inode_idx)] != -1) do
+		//change state of process to (WAIT_FILE,inode index)
+		[process_table + 4] = WAIT_FILE;
+		[process_table + 5] = inode_idx;
+		//call scheduler
+		backup;
+		call MOD_5;
+		restore;
+	endwhile;
+	
+	//check if file has been deleted by another process while this process was waiting :(
+	if([INODE_TABLE + (16 * inode_idx) + 1] == -1) then
+		R0 = -1;
+		return;
+	endif;
+
+	//lock the inode by setting lock field to PID of current process
+	[FILE_STATUS_TABLE + 4 * inode_idx] = currPID;
+	//return 0 :)
+	R0 = 0;
+	return;
+endif;
+//------------------------------------------
+
+//---------Release Inode(5)(final)----------
+if(funcNum == RELEASE_INODE) then
+	alias inode_idx R3;
+	alias i R4;
+	//if PID given not equal to locking pid in file_status_table return -1 :(
+	if(currPID != [FILE_STATUS_TABLE + 4 * inode_idx]) then
+		R0 = -1;
+		return;
+	endif;
+	
+	//free the lock in file status table corresponding to inode index
+	[FILE_STATUS_TABLE + 4 * (inode_idx)] = -1;
+	//wake up all process waiting for this inode index
+	i = 0;
+	while(i < 16) do
+		alias process_table R5;
+		process_table = PROCESS_TABLE + (16 * i);
+		if(([process_table + 4] == WAIT_FILE) && ([process_table + 5] == inode_idx))then
+			[process_table + 4] = READY;
+		endif;
+		i = i + 1;
+	endwhile;
+	R0 = 0;
+	return;
+endif;
+//------------------------------------------
+
 //----------------------------------------------------------------------------------------------------------

@@ -1,0 +1,15 @@
+int main()
+{
+	decl
+		str mystr;
+		int permission,ret;
+	enddecl
+	begin
+		ret = exposcall("Write",-2,"Filename");
+		ret = exposcall("Read",-1,mystr);
+		ret = exposcall("Write",-2,"Permission");
+		ret = exposcall("Read",-1,permission);
+		ret = exposcall("Create",mystr,permission);
+		return 0;
+	end
+}

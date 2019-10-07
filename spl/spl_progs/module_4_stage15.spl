@@ -71,5 +71,26 @@ if (funcNum == DISK_LOAD) then
 endif;
 //-------------------------------------
 
+//-------------Disk Store(1)(final)------------
+if(funcNum == DISK_STORE) then
+	alias page_number R3;
+	alias block_number R4;
+	backup;
+	R1 = ACQUIRE_DISK;
+	R2 = currPID;
+	call MOD_0;
+	restore;
+	[DISK_STATUS_TABLE + 1] = 1;		//1 --> STORE OPERATION	
+	[DISK_STATUS_TABLE + 2] = page_number;	//set page number
+	[DISK_STATUS_TABLE + 3] = block_number;	//set block number
+	store(page_number,block_number);
+	[PROCESS_TABLE + (currPID*16) + 4] = WAIT_DISK;
+	backup;
+	call MOD_5;
+	restore;
+	return;
+endif;
+//---------------------------------------------
+
 return;
 //--------------------------------------------------------------------------------------------------------

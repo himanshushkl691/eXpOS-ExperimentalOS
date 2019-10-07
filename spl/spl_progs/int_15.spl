@@ -1,0 +1,61 @@
+//-------------------------------------INTERRUPT 15 MODULE---------------------------------------
+
+//---------------------Shutdown System Call(21)--------------------
+alias currPID R0;
+alias process_table R1;
+alias userSP R2;
+alias ret R3;
+userSP = SP;
+currPID = [SYSTEM_STATUS_TABLE + 1];
+process_table = PROCESS_TABLE + (16 * currPID);
+ret = [PTBR + 2 * ((userSP - 1) / 512)] * 512 + (userSP - 1) % 512;
+[process_table + 13] = SP;
+SP = [process_table + 11] * 512 - 1;
+[process_table + 9] = 21;
+
+//shutdown system call can only be invoked from shell process of root user return -1 if not :(
+if(([process_table + 1] != 1) || ([process_table + 3] != 1)) then
+	[ret] = -1;
+	[process_table + 9] = 0;
+	SP = userSP;
+	ireturn;
+endif;
+
+//write back inode and user table
+backup;
+R1 = 1;		//disk store
+R2 = currPID;	//pid of current process
+R3 = 59;	//page number
+R4 = 3;		//block number
+call MOD_4;
+restore;
+backup;
+R1 = 1;		//disk store
+R2 = currPID;	//pid of current process
+R3 = 60;	//page number
+R4 = 4;		//block number
+call MOD_4;
+restore;
+
+//write back root file
+backup;
+R1 = 1;		//disk store
+R2 = currPID;	//pid of current process
+R3 = 62;	//page number
+R4 = 5;		//block number
+call MOD_4;
+restore;
+
+//write back disk free list
+backup;
+R1 = 1;		//disk store
+R2 = currPID;	//pid of current process
+R3 = 61;	//page number
+R4 = 2;		//block number
+call MOD_4;
+restore;
+
+halt;
+//-----------------------------------------------------------------
+
+//-----------------------------------------------------------------------------------------------

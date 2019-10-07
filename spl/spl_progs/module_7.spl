@@ -6,6 +6,10 @@ loadi(64,14);
 loadi(65,7);
 loadi(66,8);
 
+//load INT_4 module
+loadi(10,23);
+loadi(11,24);
+
 //load INT_6 module
 loadi(14,27);
 loadi(15,28);
@@ -78,6 +82,9 @@ loadi(7,20);
 loadi(59,3);
 loadi(60,4);
 
+//load root file
+loadi(62,5);
+
 //load disk free list
 loadi(61,2);
 
@@ -94,6 +101,7 @@ while(i < 16) do
 	i = i + 1;
 endwhile;
 
+//initialize memory free list
 i = 0;
 cnt = 0;
 while(i < 128) do
@@ -111,6 +119,23 @@ i = 0;
 while(i < MAX_SEM_COUNT) do
 	[SEMAPHORE_TABLE + (4 * i)] = -1;	//locking pid
 	[SEMAPHORE_TABLE + (4 * i) + 1] = 0;	//process count
+	i = i + 1;
+endwhile;
+
+//initialize file status table by setting lock pid and file open count to -1
+i = 0;
+while(i < MAX_FILE_NUM) do
+	[FILE_STATUS_TABLE + (4 * i)] = -1;
+	[FILE_STATUS_TABLE + (4 * i) + 1] = -1;
+	i = i + 1;
+endwhile;
+
+//initialize buffer table by setting block number and locking pid to -1 and dirty bit to 0
+i = 0;
+while(i < MAX_BUFFER) do
+	[BUFFER_TABLE + (4 * i)] = -1;		//block number
+	[BUFFER_TABLE + (4 * i) + 1] = 0;	//dirty bit
+	[BUFFER_TABLE + (4 * i) + 2] = -1;	//locking pid
 	i = i + 1;
 endwhile;
 
@@ -160,6 +185,8 @@ i = 20;
 i = 16;
 //pid
 [PROCESS_TABLE + i + 1] = 1;
+//userid
+[PROCESS_TABLE + i + 3] = 1;
 //status
 [PROCESS_TABLE + i + 4] = CREATED;
 //user area page number
