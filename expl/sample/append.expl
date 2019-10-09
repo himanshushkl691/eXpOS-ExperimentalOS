@@ -1,0 +1,30 @@
+int main()
+{
+	decl
+		int ret,fd,i,ret1;
+		str mystr;
+	enddecl
+	begin
+		ret = exposcall("Write",-2,"Filename");
+		ret = exposcall("Read",-1,mystr);
+		fd = exposcall("Open",mystr);
+		ret = exposcall("Seek",fd,2048);
+		i = 2000;
+		while(i < 2514) do
+			ret = exposcall("Write",fd,i);
+			i = i + 1;
+		endwhile;
+		ret = exposcall("Seek",fd,-1);
+		i = exposcall("Read",fd,ret1);
+		while(i == 0) do
+			ret = exposcall("Write",-2,ret1);
+			i = exposcall("Seek",fd,-2);
+			if(i == 0) then
+				i = exposcall("Read",fd,ret1);
+			else
+				break;
+			endif;
+		endwhile;
+		return 0;
+	end
+}

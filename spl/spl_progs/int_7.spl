@@ -1,0 +1,183 @@
+//-------------------------------------------INTERRUPT 7 MODULE-----------------------------------------------------
+
+//---------------------Write System Call(5)(final)-----------------------------
+alias currPID R0;
+alias userSP R1;
+alias process_table R2;
+alias file_descriptor R3;
+alias ret R4;
+alias content R5;
+
+currPID = [SYSTEM_STATUS_TABLE + 1];
+userSP = SP;
+process_table = PROCESS_TABLE + (16 * currPID);
+file_descriptor = [[PTBR + 2 * ((userSP - 4) / 512)] * 512 + (userSP - 4) % 512];
+content 	= [[PTBR + 2 * ((userSP - 3) / 512)] * 512 + (userSP - 3) % 512];
+ret 		= [PTBR + 2 * ((userSP - 1) / 512)] * 512 + (userSP - 1) % 512;
+
+[process_table + 9] = 5;
+
+[process_table + 13] = SP;
+SP = [process_table + 11] * 512 - 1;
+
+if (file_descriptor == -2) then
+	//write on terminal
+	backup;
+	R1 = TERMINAL_WRITE;	//terminal_write()
+	R2 = currPID;		//currPID
+	R3 = content;		//content
+	call MOD_4;		//device manager module
+	restore;
+else
+	//write in file
+	//if file descriptor is invalid
+	if((file_descriptor < 0) || (file_descriptor > 7)) then
+		[ret] = -1;
+		[process_table + 9] = 0;
+		SP = userSP;
+		ireturn;
+	endif;
+
+	alias resource_table R6;
+	resource_table = [process_table + 11] * 512 + 496;
+
+	//if identifier is not FILE, no file associated with this file descriptor :(
+	if([resource_table + (2 * file_descriptor)] != FILE) then
+		[ret] = -1;
+		[process_table + 9] = 0;
+		SP = userSP;
+		ireturn;
+	endif;
+
+	alias open_file_entry R7;
+	alias inode R8;
+	alias inode_table R13;
+	alias open_file_table R14;
+	open_file_entry = [resource_table + (2 * file_descriptor) + 1];
+	open_file_table = OPEN_FILE_TABLE + (4 * open_file_entry);
+	inode		= [open_file_table];
+	inode_table 	= INODE_TABLE + (16 * inode);
+
+	//check userid of inode and process table
+	//if user is not root and does not own file and exclusive permission is set :(
+	if([process_table + 3] != 1) then
+		if([inode_table + 3] != [process_table + 3]) then
+			if([inode_table + 4] == EXCLUSIVE) then
+				[ret] = -3;
+				[process_table + 9] = 0;
+				SP = userSP;
+				ireturn;
+			endif;
+		endif;
+	endif;
+
+	//acquire_inode() in resource manager
+	backup;
+	R1 = ACQUIRE_INODE;
+	R2 = currPID;
+	R3 = inode;
+	call MOD_0;
+	//if acquiring fails
+	if(R0 == -1) then
+		restore;
+		[ret] = -1;
+		[process_table + 9] = 0;
+		SP = userSP;
+		ireturn;
+	endif;
+	restore;
+
+	alias lseek R9;
+	lseek = [open_file_table + 2];
+	
+	//if lseek is same as MAX_FILE_SIZE, maximum file size of 2048 is reached :(
+	if(lseek == MAX_FILE_SIZE) then
+		//release_inode() in resource manager
+		backup;
+		R1 = RELEASE_INODE;
+		R2 = currPID;
+		R3 = inode;
+		call MOD_0;
+		restore;
+		[ret] = -2;
+		[process_table + 9] = 0;
+		SP = userSP;
+		ireturn;
+	endif;
+	
+	//if lseek is a multiple of 512 and is equal to file size, means lseek is starting of new block but not last
+	//new block to be allocated
+	if(((lseek % 512) == 0) && (lseek == [inode_table + 2])) then
+		alias block_num R10;
+		block_num = -1;
+		
+		//call get_free_block() in memory manager
+		multipush(R0,R1,R2,R3,R4,R5,R6,R7,R8,R9,R11,R12,R13,R14,R15,BP);
+		R1 = GET_FREE_BLOCK;
+		call MOD_2;
+		block_num = R0;
+		multipop(R0,R1,R2,R3,R4,R5,R6,R7,R8,R9,R11,R12,R13,R14,R15,BP);
+
+		//if no disk_block is found :(
+		if(block_num == -1) then
+			//release_inode() in resource manager
+			backup;
+			R1 = RELEASE_INODE;
+			R2 = currPID;
+			R3 = inode;
+			call MOD_0;
+			restore;	
+			[ret] = -2;
+			[process_table + 9] = 0;
+			SP = userSP;
+			ireturn;
+		endif;
+		
+		//set disk block number in corresponding (lseek / 512) disk block field in inode_table
+		[inode_table + 8 + (lseek / 512)] = block_num;
+	endif;
+	
+	alias block_idx R10;
+	alias block_num R11;
+	alias offset R12;
+	block_idx = lseek / 512;
+	block_num = [inode_table + 8 + block_idx];
+	offset = lseek % 512;
+	
+	//buffered_write() in file manager module
+	backup;
+	R1 = BUFFERED_WRITE;
+	R2 = block_num;
+	R3 = offset;
+	R4 = content;
+	call MOD_3; 
+	restore;
+
+	//if lseek equals file size *increment file size* in INODE_TABLE and also in memory copy of ROOT_FILE
+	if(lseek == [inode_table + 2]) then
+		//increase file size in inode table entry
+		[inode_table + 2] = [inode_table + 2] + 1;
+		//increase file size in root_file entry
+		[ROOT_FILE + (8 * inode) + 1] = [ROOT_FILE + (8 * inode) + 1] + 1;
+	endif;
+
+	//increment lseek in open_file_table
+	[open_file_table + 2] = [open_file_table + 2] + 1;
+
+	//release_inode() in resource manager
+	backup;
+	R1 = RELEASE_INODE;
+	R2 = currPID;
+	R3 = inode;
+	call MOD_0;
+	restore;
+endif;
+
+//success :)
+[ret] = 0;
+[process_table + 9] = 0;
+SP = userSP;
+ireturn;
+//-----------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------------------------------------------

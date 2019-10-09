@@ -1,0 +1,28 @@
+int main()
+{
+	decl
+		int ret,ret1,fd;
+		str i;
+	enddecl
+	begin
+		fd = exposcall("Open","root");
+		if((fd >= 0) AND (fd <= 7)) then
+			ret1 = exposcall("Read",fd,i);
+			while(ret1 == 0) do
+				if(i != "-1") then
+					write(i);
+				endif;
+				ret1 = exposcall("Seek",fd,7);
+				if(ret1 == 0) then
+					ret1 = exposcall("Read",fd,i);
+				else
+					break;
+				endif;
+			endwhile;
+			ret = exposcall("Close",fd);
+		else
+			write("Error");
+		endif;
+		return 0;
+	end
+}

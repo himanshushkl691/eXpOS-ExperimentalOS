@@ -1,0 +1,34 @@
+int main()
+{
+	decl
+		int ret,fileDesc,ret1;
+		str mystr;
+		str curr;
+	enddecl
+	begin
+		ret = exposcall("Write",-2,"Filename");
+		ret = exposcall("Read",-1,mystr);
+		fileDesc = exposcall("Open",mystr);
+		if(fileDesc >= 0) then
+			ret1 = exposcall("Read",fileDesc,curr);
+			while(ret1 == 0) do
+				ret = exposcall("Write",-2,curr);
+				ret1 = exposcall("Read",fileDesc,curr);
+			endwhile;
+			ret = exposcall("Close",fileDesc);
+		endif;
+
+		if(fileDesc == -1) then
+			write("NotFound");
+		endif;
+
+		if(fileDesc == -2) then
+			write("SysLimit");
+		endif;
+
+		if(fileDesc == -3) then
+			write("ProcLimit");
+		endif;
+		return 0;
+	end
+}

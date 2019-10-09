@@ -127,4 +127,116 @@ if(sys_call_num == 3) then
 endif;
 //-------------------------------------------------------------
 
+//------------------Seek System Call(6)(final)-----------------
+if(sys_call_num == 6) then
+	alias file_descriptor R5;
+	alias offset R6;
+	alias resource_table R7;
+	alias open_file_entry R8;
+	alias inode R9;
+	alias open_file_table R10;
+	alias inode_table R11;
+	alias lseek R12;
+	alias file_size R13;
+
+	[process_table + 9] = sys_call_num;
+
+	file_descriptor = [[PTBR + 2 * ((userSP - 4) / 512)] * 512 + (userSP - 4) % 512];
+	offset		= [[PTBR + 2 * ((userSP - 3) / 512)] * 512 + (userSP - 3) % 512];
+	resource_table 	= [process_table + 11] * 512 + 496;
+
+	//file descriptor is invalid :(
+	if((file_descriptor < 0) || (file_descriptor > 7)) then
+		[ret] = -1;
+		[process_table + 9] = 0;
+		SP = userSP;
+		ireturn;
+	endif;
+
+	//identifier is not FILE :(
+	if([resource_table + (2 * file_descriptor)] != FILE) then
+		[ret] = -1;
+		[process_table + 9] = 0;
+		SP = userSP;
+		ireturn;
+	endif;
+
+	open_file_entry = [resource_table + (2 * file_descriptor) + 1];
+	open_file_table = OPEN_FILE_TABLE + (4 * open_file_entry);
+	inode		= [open_file_table];
+	inode_table	= INODE_TABLE + (16 * inode);
+
+	//acquire_inode() in resource manager
+	backup;
+	R1 = ACQUIRE_INODE;
+	R2 = currPID;
+	R3 = inode;
+	call MOD_0;
+	//acquiring inode fails
+	if(R0 == -1) then
+		restore;
+		[ret] = -1;
+		[process_table + 9] = 0;
+		SP = userSP;
+		ireturn;
+	endif;
+	restore;
+	
+	//get current lseek position from open_file_table
+	lseek = [open_file_table + 2];
+	
+	//backup;
+	//print lseek;
+	//restore;
+	
+	file_size = [inode_table + 2];
+	//if root_file then size is fixed 480
+	if(inode == INODE_ROOT) then
+		file_size = 480;
+	endif;
+
+	//file pointer becomes negative :(
+	if((lseek + offset) < 0) then
+		backup;
+		R1 = RELEASE_INODE;
+		R2 = currPID;
+		R3 = inode;
+		call MOD_0;
+		restore;
+		[ret] = -2;
+		[process_table + 9] = 0;
+		SP = userSP;
+		ireturn;
+	endif;
+	
+	if(offset == 0) then
+		[open_file_table + 2] = 0;
+	else
+		if((lseek + offset) > file_size) then
+			[open_file_table + 2] = file_size;
+		else
+			[open_file_table + 2] = lseek + offset;
+		endif;
+	endif;
+
+	//backup;
+	//print [open_file_table + 2];
+	//restore;
+
+	//release_inode() in resource manager
+	backup;
+	R1 = RELEASE_INODE;
+	R2 = currPID;
+	R3 = inode;
+	call MOD_0;
+	restore;
+	
+	//success :)
+	[ret] = 0;
+	[process_table + 9] = 0;
+	SP = userSP;
+	ireturn;
+endif;
+//-------------------------------------------------------------
+
 //------------------------------------------------------------------------------------------------------

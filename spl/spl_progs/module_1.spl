@@ -2,6 +2,56 @@
 alias funcNum R1;
 alias currPID R2;
 
+//-------------Kill All(5)(final)-----------------
+if(funcNum == KILL_ALL) then
+	alias i R3;
+
+	//lock all files to ensure no processes are in middle of a file operation
+	i = 0;
+	while(i < MAX_FILE_NUM) do
+		if([INODE_TABLE + (16 * i) + 1] != -1) then
+			//acquire_inode() in resource manager
+			backup;
+			R1 = ACQUIRE_INODE;
+			R2 = currPID;
+			R3 = i;
+			call MOD_0;
+			restore;
+		endif;
+		i = i + 1;
+	endwhile;
+
+	//exit_process() for (i != currpid) and init and idle
+	i = 2;
+	while(i < MAX_PROC_NUM) do
+		if(([PROCESS_TABLE + (i * 16) + 4] != TERMINATED) && (i != currPID)) then
+			backup;
+			R1 = EXIT_PROCESS;
+			R2 = i;
+			call MOD_1;
+			restore;
+		endif;
+		i = i + 1;
+	endwhile;
+
+	//release all files acquired earlier
+	i = 0;
+	while(i < MAX_FILE_NUM) do
+		if([INODE_TABLE + (16 * i) + 1] != -1) then
+			//release_inode() in resource manager
+			backup;
+			R1 = RELEASE_INODE;
+			R2 = currPID;
+			R3 = i;
+			call MOD_0;
+			restore;
+		endif;
+		i = i + 1;
+	endwhile;
+	return;
+endif;
+//------------------------------------------------
+
 //-----------Free User Area Page(final)-----------
 if(funcNum == FREE_USER_AREA_PAGE) then
 	alias userAreaPageNum R3;
@@ -41,7 +91,7 @@ if(funcNum == FREE_USER_AREA_PAGE) then
 endif;
 //------------------------------------------------
 
-//--------Exit Process(final)----------
+//-------------Exit Process(final)----------------
 if(funcNum == EXIT_PROCESS) then
 	//if exit_process() is not called from exec()
 	if([PROCESS_TABLE + (currPID * 16) + 9] != 9)	then
@@ -78,9 +128,9 @@ if(funcNum == EXIT_PROCESS) then
 	[PROCESS_TABLE + (currPID * 16) + 4] = TERMINATED;
 	return;
 endif;
-//-------------------------------------
+//------------------------------------------------
 
-//------Free Page Table(final)---------
+//------------Free Page Table(final)--------------
 if(funcNum == FREE_PAGE_TABLE) then
 	alias temp R4;
 	alias disk_entry R5;
@@ -117,9 +167,9 @@ if(funcNum == FREE_PAGE_TABLE) then
 	endwhile;
 	return;
 endif;
-//-------------------------------------
+//------------------------------------------------
 
-//--------Get PCB Entry(final)---------
+//--------------Get PCB Entry(final)--------------
 if(funcNum == GET_PCB_ENTRY) then
 	alias i R3;
 	i = 0;
@@ -137,6 +187,7 @@ if(funcNum == GET_PCB_ENTRY) then
 	R0 = -1;	//if index is not found
 	return;
 endif;
-//-------------------------------------
+//------------------------------------------------
+
 return;
 //-----------------------------------------------------------------------------------------------------

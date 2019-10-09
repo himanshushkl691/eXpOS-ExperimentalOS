@@ -2,7 +2,7 @@
 
 alias funcNum R1;
 
-//-----------------Open(3)(final)----------------
+//---------------------Open(3)(final)--------------------
 if(funcNum == OPEN) then
 	alias filename R2;
 	alias i R3;
@@ -114,9 +114,9 @@ if(funcNum == OPEN) then
 	R0 = (open_file_entry - OPEN_FILE_TABLE) / 4;
 	return;
 endif;
-//-----------------------------------------------
+//-------------------------------------------------------
 
-//-------------Close(4)(final)-------------------
+//------------------Close(4)(final)----------------------
 if(funcNum == CLOSE) then
 	alias open_file_entry R2;
 	alias inode R3;
@@ -147,10 +147,10 @@ if(funcNum == CLOSE) then
 	endif;
 	return;
 endif;
-//-----------------------------------------------
+//-------------------------------------------------------
 
-//-----------Buffered Read(2)(final)-------------
-if(funcNum == BUFFERED_READ) then
+//-----------Buffered Read/Write(2/1)(final)-------------
+if((funcNum == BUFFERED_READ) || (funcNum == BUFFERED_WRITE)) then
 	alias disk_block_num R2;
 	alias offset R3;
 	alias physical_memory_addr R4;
@@ -170,7 +170,7 @@ if(funcNum == BUFFERED_READ) then
 
 	//if buffer is allocated by another disk_block
 	if([buffer_table] != disk_block_num) then
-		//check dirty bits for changes to be copied back
+		//check dirty bits for changes to be copied back in disk
 		if([buffer_table + 1] == 1) then
 			backup;
 			R1 = DISK_STORE;
@@ -195,9 +195,18 @@ if(funcNum == BUFFERED_READ) then
 		//set block number of buffer to given disk_block_number
 		[buffer_table] = disk_block_num;
 	endif;
-	
-	//copy contents at offset in buffer to given physical_memory_addr
-	[physical_memory_addr] = [(71 + buffer_num) * 512 + offset];
+
+	if(funcNum == BUFFERED_READ) then	
+		//copy contents at offset in buffer to given physical_memory_addr
+		[physical_memory_addr] = [(71 + buffer_num) * 512 + offset];
+	endif;
+
+	if(funcNum == BUFFERED_WRITE) then
+		//write content given as physical_memory_addr to specified location
+		[(71 + buffer_num) * 512 + offset] = physical_memory_addr;
+		//mark the buffer as dirty
+		[buffer_table + 1] = 1;
+	endif;
 	
 	//release_buffer() in resource manager
 	backup;
@@ -209,7 +218,7 @@ if(funcNum == BUFFERED_READ) then
 
 	return;
 endif;
-//-----------------------------------------------
+//-------------------------------------------------------
 
 return;
 //-------------------------------------------------------------------------------------------------------------------

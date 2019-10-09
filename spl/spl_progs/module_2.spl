@@ -2,6 +2,28 @@
 alias funcNum R1;
 alias pageNum R2;
 
+//-----------Get Free Block(final)----------------
+if(funcNum == GET_FREE_BLOCK) then
+	alias i R3;
+	
+	//search through disk_free_list for free user blocks, not allocated to OS or swap area
+	i = DISK_FREE_AREA;
+	while(i < DISK_SWAP_AREA) do
+		if([DISK_FREE_LIST + i] == 0) then
+			//found :)
+			[DISK_FREE_LIST + i] = 1;
+			R0 = i;
+			return;
+		endif;
+		i = i + 1;
+	endwhile;
+
+	//not found :(
+	R0 = -1;
+	return;
+endif;
+//------------------------------------------------
+
 //----------Get Free Page(Final Version)----------
 if(funcNum == GET_FREE_PAGE) then
 	//increment wait_mem_count
@@ -32,7 +54,7 @@ if(funcNum == GET_FREE_PAGE) then
 	R0 = i;
 	return;
 endif;
-//---------------------------------
+//------------------------------------------------
 
 //----------Release Page(Final Version)-----------
 if(funcNum == RELEASE_PAGE) then
@@ -54,9 +76,9 @@ if(funcNum == RELEASE_PAGE) then
 	endif;
 	return;
 endif;
-//---------------------------------
+//------------------------------------------------
 
-//------Get Code Page(final)-------
+//-------------Get Code Page(final)---------------
 if(funcNum == GET_CODE_PAGE) then
 	//print "*********";
 	//print "=>PID.";
@@ -95,15 +117,15 @@ if(funcNum == GET_CODE_PAGE) then
 	call MOD_4;			//device manager
 	return;
 endif;
-//---------------------------------
+//------------------------------------------------
 
-//------RELEASE BLOCK(final)-------
+//-------------RELEASE BLOCK(final)---------------
 if(funcNum == RELEASE_BLOCK) then
 	alias block_num R2;
 	[DISK_FREE_LIST + block_num] = [DISK_FREE_LIST + block_num] - 1;
 	return;
 endif;
-//---------------------------------
+//------------------------------------------------
 
 return;
 //---------------------------------------------------------------

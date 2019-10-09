@@ -1,6 +1,6 @@
 //-------------------------------------INTERRUPT 15 MODULE---------------------------------------
 
-//---------------------Shutdown System Call(21)--------------------
+//-----------------Shutdown System Call(21)(final)-----------------
 alias currPID R0;
 alias process_table R1;
 alias userSP R2;
@@ -21,16 +21,43 @@ if(([process_table + 1] != 1) || ([process_table + 3] != 1)) then
 	ireturn;
 endif;
 
+//kill_all() in process manager
+backup;
+R1 = KILL_ALL;
+R2 = currPID;
+call MOD_1;
+restore;
+
+alias i R4;
+
+//commit changes to disk for dirty buffer
+i = 0;
+while(i < MAX_BUFFER) do
+	//if entry is valid and buffer is dirty commit changes
+	if(([BUFFER_TABLE + (4 * i)] != -1) && ([BUFFER_TABLE + (4 * i) + 1] == 1)) then
+		alias block_num R5;
+		block_num = [BUFFER_TABLE + (4 * i)];
+		backup;
+		R1 = DISK_STORE;
+		R2 = currPID;
+		R3 = (71 + i);
+		R4 = block_num;
+		call MOD_4;
+		restore;
+	endif;
+	i = i + 1;
+endwhile;
+
 //write back inode and user table
 backup;
-R1 = 1;		//disk store
+R1 = DISK_STORE;//disk store
 R2 = currPID;	//pid of current process
 R3 = 59;	//page number
 R4 = 3;		//block number
 call MOD_4;
 restore;
 backup;
-R1 = 1;		//disk store
+R1 = DISK_STORE;//disk store
 R2 = currPID;	//pid of current process
 R3 = 60;	//page number
 R4 = 4;		//block number
@@ -39,7 +66,7 @@ restore;
 
 //write back root file
 backup;
-R1 = 1;		//disk store
+R1 = DISK_STORE;//disk store
 R2 = currPID;	//pid of current process
 R3 = 62;	//page number
 R4 = 5;		//block number
@@ -48,7 +75,7 @@ restore;
 
 //write back disk free list
 backup;
-R1 = 1;		//disk store
+R1 = DISK_STORE;//disk store
 R2 = currPID;	//pid of current process
 R3 = 61;	//page number
 R4 = 2;		//block number

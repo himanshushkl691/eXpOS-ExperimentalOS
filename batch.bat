@@ -1,6 +1,10 @@
 load --os $HOME/Desktop/myexpos/spl/spl_progs/final_os_startup.xsm
 load --init $HOME/Desktop/myexpos/expl/sample/shell_2.xsm
-load --exec $HOME/Desktop/myexpos/expl/sample/readf.xsm
+load --exec $HOME/Desktop/myexpos/expl/sample/cat.xsm
+load --exec $HOME/Desktop/myexpos/expl/sample/ls.xsm
+load --exec $HOME/Desktop/myexpos/expl/sample/rm.xsm
+load --exec $HOME/Desktop/myexpos/expl/sample/cp.xsm
+load --exec $HOME/Desktop/myexpos/expl/sample/test6.xsm
 load --idle $HOME/Desktop/myexpos/expl/sample/idle.xsm
 load --exhandler $HOME/Desktop/myexpos/spl/spl_progs/exception_handler.xsm
 load --library $HOME/Desktop/myexpos/expl/library.lib
@@ -10,7 +14,7 @@ load --int=disk $HOME/Desktop/myexpos/spl/spl_progs/disk_interrupt.xsm
 load --int=4 $HOME/Desktop/myexpos/spl/spl_progs/int_4.xsm
 load --int=5 $HOME/Desktop/myexpos/spl/spl_progs/int_5.xsm
 load --int=6 $HOME/Desktop/myexpos/spl/spl_progs/int_6.xsm
-load --int=7 $HOME/Desktop/myexpos/spl/spl_progs/sample_int_7.xsm
+load --int=7 $HOME/Desktop/myexpos/spl/spl_progs/int_7.xsm
 load --int=8 $HOME/Desktop/myexpos/spl/spl_progs/int_8.xsm
 load --int=9 $HOME/Desktop/myexpos/spl/spl_progs/int_9.xsm
 load --int=10 $HOME/Desktop/myexpos/spl/spl_progs/int_10.xsm

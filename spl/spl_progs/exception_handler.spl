@@ -26,7 +26,7 @@ endif;
 
 //cause of exception is illegal memory access
 if(EC == 2) then
-	//print "IllegalMemAccess";
+	print "IllMem";
 	//print "************";
 	backup;
 	R1 = EXIT_PROCESS;
@@ -38,7 +38,6 @@ endif;
 
 //cause of exception is arithmetic exception
 if(EC == 3) then
-	print "ArithmeticExc";
 	//print "************";
 	backup;
 	R1 = EXIT_PROCESS;

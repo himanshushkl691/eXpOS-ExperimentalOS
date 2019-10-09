@@ -1,0 +1,38 @@
+int main()
+{
+	decl
+		int fd1,fd2,ret1,ret2,ret;
+		str file1,file2;
+	enddecl
+	begin
+		write("FromFile");
+		ret = exposcall("Read",-1,file1);
+		fd1 = exposcall("Open",file1);
+		if(fd1 >= 0) then
+			write("ToFile");
+			ret = exposcall("Read",-1,file2);
+			ret = exposcall("Create",file2);
+			if(ret == 0) then
+				fd2 = exposcall("Open",file2);
+				if(fd2 >= 0) then
+					ret1 = exposcall("Read",fd1,ret);
+					while(ret1 == 0) do
+						ret2 = exposcall("Write",fd2,ret);
+						ret1 = exposcall("Read",fd1,ret);
+					endwhile;
+					ret = exposcall("Close",fd1);
+					ret = exposcall("Close",fd2);
+				else
+					write("OpenErr");
+					ret = exposcall("Close",fd1);
+				endif;
+			else
+				write("NotFound");
+				ret = exposcall("Close",fd1);
+			endif;
+		else
+			write("OpenErr");
+		endif;
+		return 0;
+	end
+}
