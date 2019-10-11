@@ -42,7 +42,7 @@ if(funcNum == GET_FREE_PAGE) then
 	[SYSTEM_STATUS_TABLE + 2] = [SYSTEM_STATUS_TABLE + 2] - 1;
 
 	alias i R3;
-	i = 0;
+	i = 76;
 	while(i < MAX_MEM_PAGE) do
 		if([MEMORY_FREE_LIST + i] == 0) then
 			[MEMORY_FREE_LIST + i] = 1;

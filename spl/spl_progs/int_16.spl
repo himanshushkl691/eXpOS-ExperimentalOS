@@ -1,0 +1,246 @@
+//-------------------------------------INTERRUPT 16 MODULE----------------------------------------
+
+//extract info from user stack
+alias currPID R0;
+alias userSP R1;
+alias process_table R2;
+alias sys_call_num R3;
+alias username R4;
+alias unencrypted_pswd R5;
+alias ret R6;
+currPID = [SYSTEM_STATUS_TABLE + 1];
+userSP = SP;
+process_table = PROCESS_TABLE + (currPID * 16);
+sys_call_num = [[PTBR + 2 * ((userSP - 5) / 512)] * 512 + (userSP - 5) % 512];
+username = [[PTBR + 2 * ((userSP - 4) / 512)] * 512 + (userSP - 4) % 512];
+unencrypted_pswd = [[PTBR + 2 * ((userSP - 3) / 512)] * 512 + (userSP - 3) % 512];
+ret = [PTBR + 2 * ((userSP - 1) / 512)] * 512 + (userSP - 1) % 512;
+
+//-------------------------Newusr system call(22)(final)-------------------
+if(sys_call_num == 22) then
+	alias i R8;
+	alias userid R9;
+	alias encrypted_pswd R10;
+
+	[process_table + 9] = sys_call_num;
+	
+	//if current user is not root or or if current process is not shell :(
+	if(([SYSTEM_STATUS_TABLE] != 1) || (currPID != 2)) then
+		[ret] = -2;
+		[process_table + 9] = 0;
+		ireturn;
+	endif;
+
+	//search if user already exist
+	i = 0;
+	userid = -1;
+	while(i < MAX_USER_NUM) do
+		if([USER_TABLE + (2 * i)] == username) then
+			//if already existing :(
+			[ret] = -1;
+			[process_table + 9] = 0;
+			ireturn;
+		endif;
+		if((userid == -1) && ([USER_TABLE + (2 * i)] == -1) && ([USER_TABLE + (2 * i) + 1] == -1)) then
+			userid = i;
+		endif;
+		i = i + 1;
+	endwhile;
+
+	//if no free entry is found, max user reached :(
+	if(userid == -1) then
+		[ret] = -3;
+		[process_table + 9] = 0;
+		ireturn;
+	endif;
+
+	//encrypt password
+	encrypted_pswd = unencrypted_pswd;
+	encrypt encrypted_pswd;
+	
+	//set new username and encrypted password in userid
+	[USER_TABLE + (2 * userid)] = username;
+	[USER_TABLE + (2 * userid) + 1] = encrypted_pswd;
+
+	//success :)
+	[ret] = 0;
+	[process_table + 9] = 0;
+	ireturn;
+endif;
+//-------------------------------------------------------------------------
+
+//-------------------------Remusr system call(23)(final)-------------------
+if(sys_call_num == 23) then
+	alias i R7;
+	alias userid R8;
+
+	[process_table + 9] = sys_call_num;
+	
+	//if current user is not root or current process is not shell :(
+	if(([SYSTEM_STATUS_TABLE] != 1) || (currPID != 2)) then
+		[ret] = -2;
+		[process_table + 9] = 0;
+		ireturn;	
+	endif;
+
+	//if user to be removed is kernel or root :(
+	if((username == "root") || (username == "kernel")) then
+		[ret] = -2;
+		[process_table + 9] = 0;
+		ireturn;
+	endif;
+
+	//search user table for given username
+	i = 0;
+	userid = -1;
+	while(i < MAX_USER_NUM) do
+		if([USER_TABLE + (2 * i)] == username) then
+			userid = i;
+			break;
+		endif;
+		i = i + 1;
+	endwhile;
+
+	//if entry not found :(
+	if(userid == -1) then
+		[ret] = -1;
+		[process_table + 9] = 0;
+		ireturn;
+	endif;
+
+	//loop through root file and check if there is file present on disk for provided username
+	i = 0;
+	while(i < MAX_FILE_NUM) do
+		alias root_file R9;
+		root_file = ROOT_FILE + (8 * i);
+		if(([root_file + 3] == username) && ([root_file] != -1)) then
+			//if file is present undeleted :(
+			[ret] = -3;
+			[process_table + 9] = 0;
+			ireturn;
+		endif;
+		i = i + 1;
+	endwhile;
+
+	//invalidate entry in user table for given username and password
+	[USER_TABLE + (2 * userid)] = -1;
+	[USER_TABLE + (2 * userid) + 1] = -1;
+
+	//success :)
+	[ret] = 0;
+	[process_table + 9] = 0;
+	ireturn;
+endif;
+//-------------------------------------------------------------------------
+
+//-------------------------Setpwd system call(24)(final)-------------------
+if(sys_call_num == 24) then
+	alias i R7;	
+	alias userid R8;
+	alias encrypted_pswd R9;
+	
+	[process_table + 9] = sys_call_num;
+
+	//if current process is not shell :(
+	if(currPID != 2) then
+		[ret] = -1;
+		[process_table + 9] = 0;
+		ireturn;
+	endif;
+
+	//loop through user table and find entry corresponding to username
+	i = 0;
+	userid = -1;
+	while(i < MAX_USER_NUM) do
+		if([USER_TABLE + (2 * i)] == username) then
+			userid = i;
+			break;
+		endif;
+		i = i + 1;
+	endwhile;
+
+	//if entry not found :(
+	if(userid == -1) then
+		[ret] = -2;
+		[process_table + 9] = 0;
+		ireturn;
+	endif;
+
+	//if userid of process is not equal to userid of user and current user is not root
+	//or current process is not shell :(
+	if((([process_table + 3] != userid) && ([SYSTEM_STATUS_TABLE] != 1)) || (currPID != 2)) then
+		[ret] = -1;
+		[process_table + 9] = 0;
+		ireturn;
+	endif;
+
+	//encrypt password
+	encrypted_pswd = unencrypted_pswd;
+	encrypt encrypted_pswd;
+
+	//set encrypted password as new password
+	[USER_TABLE + (2 * userid) + 1] = encrypted_pswd;
+
+	//success :)
+	[process_table + 9] = 0;
+	[ret] = 0;
+	ireturn;
+endif;
+//-------------------------------------------------------------------------
+
+//-------------------------Getuname system call(25)(final)-----------------
+if(sys_call_num == 25) then
+	alias userid R7;
+	userid = username;
+
+	[process_table + 9] = sys_call_num;
+	
+	if((userid < 0) || (userid > 15)) then
+		[ret] = -1;
+		[process_table + 9] = 0;
+		ireturn;
+	endif;
+
+	//if entry corresponding to given userid is invalid :(
+	if(([USER_TABLE + (2 * userid)] == -1)) then
+		[ret] = -1;
+		[process_table + 9] = 0;
+		ireturn;
+	endif;
+
+	//fetch username from user table
+	username = [USER_TABLE + (2 * userid)];
+
+	//success :)
+	[process_table + 9] = 0;
+	[ret] = username;
+	ireturn;
+endif;
+//-------------------------------------------------------------------------
+
+//-------------------------Getuid system call(26)(final)-------------------
+if(sys_call_num == 26) then
+	alias i R7;
+
+	[process_table + 9] = 26;
+
+	//loop through user table to find userid
+	i = 0;
+	while(i < MAX_USER_NUM) do
+		if([USER_TABLE + (2 * i)] == username) then
+			//success :)
+			[ret] = i;
+			[process_table + 9] = 0;
+			ireturn;
+		endif;
+		i = i + 1;
+	endwhile;
+
+	//failure :(
+	[ret] = -1;
+	[process_table + 9] = 0;
+	ireturn;
+endif;
+//-------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------------------------

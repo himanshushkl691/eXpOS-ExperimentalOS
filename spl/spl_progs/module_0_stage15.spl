@@ -99,11 +99,13 @@ if(funcNum == RELEASE_SEMAPHORE) then
 			i = i + 1;
 		endwhile;
 		//decrement process_count of semaphore in semaphore table,if process_count is 0 semaphore is free
-		[SEMAPHORE_TABLE + (semid * 4) + 1] = [SEMAPHORE_TABLE + (semid * 4) + 1] - 1;
+		//[SEMAPHORE_TABLE + (semid * 4) + 1] = [SEMAPHORE_TABLE + (semid * 4) + 1] - 1;
 		R0 = 0;
 	else
 		R0 = -1;
 	endif;
+	//decrement process_count of semaphore in semaphore table,if process_count is 0 semaphore is free
+	[SEMAPHORE_TABLE + (semid * 4) + 1] = [SEMAPHORE_TABLE + (semid * 4) + 1] - 1;
 	return;
 endif;
 //------------------------------------------

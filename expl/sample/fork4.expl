@@ -1,0 +1,20 @@
+int main()
+{
+	decl
+		int ret;
+	enddecl
+	begin
+		ret = exposcall("Fork");
+		if(ret >= 0) then
+			ret = exposcall("Fork");
+			if(ret >= 0) then
+				ret = exposcall("Fork");
+				if(ret >= 0) then
+					ret = exposcall("Fork");
+				endif;
+			endif;
+		endif;
+		write("Hello");
+		return 0;
+	end
+}

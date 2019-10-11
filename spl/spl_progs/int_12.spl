@@ -1,0 +1,65 @@
+//----------------------------------------INTERRUPT 12 MODULE-------------------------------------------
+
+//extract info from user stack
+alias currPID R0;
+alias userSP R1;
+alias process_table R2;
+alias ret R3;
+alias sys_call_num R4;
+userSP = SP;
+currPID = [SYSTEM_STATUS_TABLE + 1];
+process_table = PROCESS_TABLE + (16 * currPID);
+ret = [PTBR + 2 * ((userSP - 1) / 512)] * 512 + (userSP - 1) % 512;
+sys_call_num = [[PTBR + 2 * ((userSP - 5) / 512)] * 512 + (userSP - 5) % 512];
+
+[process_table + 13] = SP;
+SP = [process_table + 11] * 512 - 1;
+
+//---------------------Logout System Call(28)(final)-------------------
+if(sys_call_num == 28) then
+	[process_table + 9] = sys_call_num;
+
+	//if current process is not shell currPID != 2
+	if(currPID != 2) then
+		[ret] = -1;
+		[process_table + 9] = 0;
+		SP = userSP;
+		ireturn;
+	endif;
+
+	//kill_all() in process manager
+	//kills all process except current process(shell),login,idle
+	backup;
+	R1 = KILL_ALL;
+	R2 = currPID;
+	call MOD_1;
+	restore;
+
+	//set state of shell process to terminated
+	[process_table + 4] = TERMINATED;
+	
+	//set entry point from header of shell in beginning of 4096
+	alias ip R5;
+	ip = [[PAGE_TABLE_BASE + (20 * currPID) + 8] * 512 + 1];
+	[[PAGE_TABLE_BASE + (20 * currPID) + 16] * 512] = ip;
+	//reset usersp field of shell to 4096
+	[process_table + 13] = 4096;
+
+	//wake up login process PID = 1
+	[PROCESS_TABLE + 20] = READY;
+	
+	//reset userid in system_status_table to 0 (end)
+	[SYSTEM_STATUS_TABLE] = 0;
+
+	//scheduler
+	backup;
+	call MOD_5;
+	restore;
+	
+	[process_table + 9] = 0;
+	SP = userSP;
+	ireturn;
+endif;
+//---------------------------------------------------------------------
+
+//------------------------------------------------------------------------------------------------------

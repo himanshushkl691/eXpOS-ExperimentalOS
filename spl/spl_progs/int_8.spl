@@ -9,7 +9,6 @@ SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] * 512 - 1;	//user a
 R1 = GET_PCB_ENTRY;
 call MOD_1;
 
-
 //if no pcb entry is available
 if(R0 == -1) then
 	[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 9] = 0;

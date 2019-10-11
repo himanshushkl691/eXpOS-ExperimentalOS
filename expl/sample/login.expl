@@ -1,0 +1,25 @@
+int main()
+{
+	decl
+		int ret;
+		str username,password;
+	enddecl
+	begin
+		while(1 == 1) do
+			write("Username");
+			ret = exposcall("Read",-1,username);
+			write("Password");
+			ret = exposcall("Read",-1,password);
+			breakpoint;
+			ret = exposcall("Login",username,password);
+			breakpoint;
+			if(ret == -1) then
+				write("InvUser");
+			endif;
+			if(ret == -2) then
+				write("PermDenied");
+			endif;
+		endwhile;
+		return 0;
+	end
+}

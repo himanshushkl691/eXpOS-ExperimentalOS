@@ -14,7 +14,7 @@ SP = [process_table + 11] * 512 - 1;
 [process_table + 9] = 21;
 
 //shutdown system call can only be invoked from shell process of root user return -1 if not :(
-if(([process_table + 1] != 1) || ([process_table + 3] != 1)) then
+if(([SYSTEM_STATUS_TABLE + 1] != 2) || ([process_table + 3] != 1)) then
 	[ret] = -1;
 	[process_table + 9] = 0;
 	SP = userSP;

@@ -4,7 +4,10 @@ loadi(64,14);
 
 //load INIT program
 loadi(65,7);
-loadi(66,8);
+
+//load shell program
+loadi(67,9);
+loadi(68,10);
 
 //load INT_4 module
 loadi(10,23);
@@ -38,6 +41,10 @@ loadi(23,36);
 loadi(24,37);
 loadi(25,38);
 
+//load INT_12 module
+loadi(26,39);
+loadi(27,40);
+
 //load INT_13 module
 loadi(28,41);
 loadi(29,42);
@@ -49,6 +56,14 @@ loadi(31,44);
 //load INT_15 module
 loadi(32,45);
 loadi(33,46);
+
+//load INT_16 module
+loadi(34,47);
+loadi(35,48);
+
+//load INT_17 module
+loadi(36,49);
+loadi(37,50);
 
 //load MOD_0
 loadi(40,53);
@@ -96,9 +111,6 @@ loadi(62,5);
 //load disk free list
 loadi(61,2);
 
-//load exec program
-//loadi(83,69);
-
 alias i R0;
 alias cnt R1;
 
@@ -113,7 +125,7 @@ endwhile;
 i = 0;
 cnt = 0;
 while(i < 128) do
-	if(i < 83) then
+	if(i < 81) then
 		[MEMORY_FREE_LIST + i] = 1;
 	else
 		[MEMORY_FREE_LIST + i] = 0;
@@ -123,36 +135,44 @@ while(i < 128) do
 endwhile;
 
 //initialize semaphore table by setting process_count to 0 and locking_pid to -1
+alias semaphore_table R2;
 i = 0;
 while(i < MAX_SEM_COUNT) do
-	[SEMAPHORE_TABLE + (4 * i)] = -1;	//locking pid
-	[SEMAPHORE_TABLE + (4 * i) + 1] = 0;	//process count
+	semaphore_table = SEMAPHORE_TABLE + (i * 4);
+	[semaphore_table] = -1;		//locking pid
+	[semaphore_table + 1] = 0;	//process count
 	i = i + 1;
 endwhile;
 
 //initialize file status table by setting lock pid and file open count to -1
+alias file_status_table R2;
 i = 0;
 while(i < MAX_FILE_NUM) do
-	[FILE_STATUS_TABLE + (4 * i)] = -1;
-	[FILE_STATUS_TABLE + (4 * i) + 1] = -1;
+	file_status_table = FILE_STATUS_TABLE + (4 * i);
+	[file_status_table] = -1;
+	[file_status_table + 1] = -1;
 	i = i + 1;
 endwhile;
 
 //initialize buffer table by setting block number and locking pid to -1 and dirty bit to 0
+alias buffer_table R2;
 i = 0;
 while(i < MAX_BUFFER) do
-	[BUFFER_TABLE + (4 * i)] = -1;		//block number
-	[BUFFER_TABLE + (4 * i) + 1] = 0;	//dirty bit
-	[BUFFER_TABLE + (4 * i) + 2] = -1;	//locking pid
-	[BUFFER_TABLE + (4 * i) + 3] = -1;	//unused
+	buffer_table = BUFFER_TABLE + (4 * i);
+	[buffer_table] = -1;		//block number
+	[buffer_table + 1] = 0;		//dirty bit
+	[buffer_table + 2] = -1;	//locking pid
+	[buffer_table + 3] = -1;	//unused
 	i = i + 1;
 endwhile;
 
 //initialize open_file_table by setting inode_indices to -1 and open_instance_count to 0
+alias open_file_table R2;
 i = 0;
 while(i < MAX_OPENFILE_NUM) do
-	[OPEN_FILE_TABLE + (4 * i)] = -1;	//inode index
-	[OPEN_FILE_TABLE + (4 * i) + 1] = 0;	//open instance count
+	open_file_table = OPEN_FILE_TABLE + (4 * i);
+	[open_file_table] = -1;		//inode index
+	[open_file_table + 1] = 0;	//open instance count
 	i = i + 1;
 endwhile;
 
@@ -168,121 +188,115 @@ endwhile;
 //disk is not busy
 [DISK_STATUS_TABLE] = 0;
 
-//-----------------INIT Program---------------------
+//-----------------INIT/Login Program---------------------
 PTBR = PAGE_TABLE_BASE;
 PTLR = 10;
-i = 20;
-//library
-[PTBR + i + 0] = 63;
-[PTBR + i + 1] = "0100";
-[PTBR + i + 2] = 64;
-[PTBR + i + 3] = "0100";
 
-//heap
-[PTBR + i + 4] = 78;
-[PTBR + i + 5] = "0110";
-[PTBR + i + 6] = 79;
-[PTBR + i + 7] = "0110";
+i = PAGE_TABLE_BASE + 20;
+alias j R3;
+j = 0;
+while(j < 20) do
+	[i + j] = -1;
+	[i + j + 1] = "0000";
+	j = j + 2;
+endwhile;
+
+//library
+[i + 0] = 63;
+[i + 1] = "0100";
+[i + 2] = 64;
+[i + 3] = "0100";
 
 //code
-[PTBR + i + 8] = 65;
-[PTBR + i + 9] = "0100";
-[PTBR + i + 10] = 66;
-[PTBR + i + 11] = "0100";
-[PTBR + i + 12] = -1;
-[PTBR + i + 13] = "0000";
-[PTBR + i + 14] = -1;
-[PTBR + i + 15] = "0000";
-//stack
-[PTBR + i + 16] = 76;
-[PTBR + i + 17] = "0110";
-[PTBR + i + 18] = 77;
-[PTBR + i + 19] = "0110";
+[i + 8] = 65;
+[i + 9] = "0100";
 
-i = 16;
+//stack
+[i + 16] = 66;
+[i + 17] = "0110";
+
+i = PROCESS_TABLE + 16;
 //pid
-[PROCESS_TABLE + i + 1] = 1;
+[i + 1] = 1;
 //userid
-[PROCESS_TABLE + i + 3] = 1;
+[i + 3] = 1;
 //status
-[PROCESS_TABLE + i + 4] = CREATED;
+[i + 4] = CREATED;
 //user area page number
-[PROCESS_TABLE + i + 11] = 80;
+[i + 11] = 77;
 //user stack pointer
-[PROCESS_TABLE + i + 13] = 8*512;
+[i + 13] = 8*512;
 //kernel stack pointer
-[PROCESS_TABLE + i + 12] = 0;
+[i + 12] = 0;
 //ptbr
-[PROCESS_TABLE + i + 14] = (PAGE_TABLE_BASE + 20);
+[i + 14] = (PAGE_TABLE_BASE + 20);
 //ptlr
-[PROCESS_TABLE + i + 15] = 10;
-[76 * 512] = [65 * 512 + 1];
+[i + 15] = 10;
+[66 * 512] = [65 * 512 + 1];
 
 //initialize per-process table for init
 i = 496;
 while(i <= 511) do
-	[80 * 512 + i] = -1;
+	[77 * 512 + i] = -1;
 	i = i + 2;
 endwhile;
 
-//initialize disk-map table fot init
-i = 0;
-while(i < 10) do
-	[DISK_MAP_TABLE + 10 + i] = -1;
-	i = i + 1;
+//---------------------Shell Program--------------------------
+PTBR = PAGE_TABLE_BASE;
+PTLR = 10;
+
+i = PAGE_TABLE_BASE + 40;
+j = 0;
+while(j < 20) do
+	[i + j] = -1;
+	[i + j + 1] = "0000";
+	j = j + 2;
 endwhile;
-[DISK_MAP_TABLE + 10 + 4] = 7;
-[DISK_MAP_TABLE + 10 + 5] = 8;
-[DISK_MAP_TABLE + 10 + 6] = -1;
-[DISK_MAP_TABLE + 10 + 7] = -1;
 
-//---------------------EXEC Program--------------------------
-//PTBR = PAGE_TABLE_BASE;
-//PTLR = 10;
-
-//i = 40;
 //library
-//[PTBR + i + 0] = 63;
-//[PTBR + i + 1] = "0100";
-//[PTBR + i + 2] = 64;
-//[PTBR + i + 3] = "0100";
-
-//heap
-//[PTBR + i + 4] = 85;
-//[PTBR + i + 5] = "0110";
-//[PTBR + i + 6] = -1;
-//[PTBR + i + 7] = "0000";
+[i + 0] = 63;
+[i + 1] = "0100";
+[i + 2] = 64;
+[i + 3] = "0100";
 
 //code
-//[PTBR + i + 8] = 83;
-//[PTBR + i + 9] = "0100";
-//[PTBR + i + 10] = -1;
-//[PTBR + i + 11] = "0000";
-//[PTBR + i + 12] = -1;
-//[PTBR + i + 13] = "0000";
-//[PTBR + i + 14] = -1;
-[PTBR + i + 15] = "0000";
+[i + 8] = 67;
+[i + 9] = "0100";
+[i + 10] = 68;
+[i + 11] = "0100";
 
 //stack
-//[PTBR + i + 16] = 84;
-//[PTBR + i + 17] = "0110";
-//[PTBR + i + 18] = -1;
-//[PTBR + i + 19] = "0000";
+[i + 16] = 78;
+[i + 17] = "0110";
+[i + 18] = 79;
+[i + 19] = "0110";
 
-//i = 32;
+i = PROCESS_TABLE + 32;
 //pid
-//[PROCESS_TABLE + i + 1] = 2;
+[i + 1] = 2;
+//ppid
+[i + 2] = 1;
 //status
-//[PROCESS_TABLE + i + 4] = CREATED;
+[i + 4] = TERMINATED;
 //user area page number
-//[PROCESS_TABLE + i + 11] = 86;
+[i + 11] = 80;
 //user stack pointer
-//[PROCESS_TABLE + i + 13] = 8*512;
+[i + 13] = 8*512;
 //kernel stack pointer
-//[PROCESS_TABLE + i + 12] = 0;
+[i + 12] = 0;
 //ptbr
-//[PROCESS_TABLE + i + 14] = (PAGE_TABLE_BASE + 40);
+[i + 14] = (PAGE_TABLE_BASE + 40);
 //ptlr
-//[PROCESS_TABLE + i + 15] = 10;
-//[84 * 512] = [83 * 512 + 1];
+[i + 15] = 10;
+[78 * 512] = [67 * 512 + 1];
+
+//initialize disk-map table for shell
+i = 0;
+while(i < 10) do
+	[DISK_MAP_TABLE + 20 + i] = -1;
+	i = i + 1;
+endwhile;
+[DISK_MAP_TABLE + 24] = 67;
+[DISK_MAP_TABLE + 25] = 68;
+breakpoint;
 return;

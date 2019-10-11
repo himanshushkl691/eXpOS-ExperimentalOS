@@ -1,0 +1,96 @@
+//-------------------------------------------INTERRUPT 17 MODULE----------------------------------------------
+
+//extract info from user stack
+alias currPID R0;
+alias userSP R1;
+alias process_table R2;
+alias ret R3;
+alias sys_call_num R4;
+alias username R5;
+alias unencrypted_pswd R6;
+userSP = SP;
+currPID = [SYSTEM_STATUS_TABLE + 1];
+process_table = PROCESS_TABLE + (16 * currPID);
+ret = [PTBR + 2 * ((userSP - 1) / 512)] * 512 + (userSP - 1) % 512;
+sys_call_num = [[PTBR + 2 * ((userSP - 5) / 512)] * 512 + (userSP - 5) % 512];
+username = [[PTBR + 2 * ((userSP - 4) / 512)] * 512 + (userSP - 4) % 512];
+unencrypted_pswd = [[PTBR + 2 * ((userSP - 3) / 512)] * 512 + (userSP - 3) % 512];
+
+[process_table + 13] = SP;
+SP = [process_table + 11] * 512 - 1;
+
+//-----------------------Login System Call(27)(final)-------------------
+if(sys_call_num == 27) then
+	alias i R7;
+	alias user_table_entry R8;
+	alias user_table R9;
+	alias encrypted_pswd R10;
+
+	[process_table + 9] = sys_call_num;
+	
+	//if currPID is not 1, means process is not login process :(
+	if(currPID != 1) then
+		[ret] = -2;
+		[process_table + 9] = 0;
+		SP = userSP;
+		ireturn;
+	endif;
+
+	//find user_table_entry corresponding to given username
+	i = 0;
+	user_table_entry = -1;
+	user_table  = -1;
+	while(i < MAX_USER_NUM) do
+		if([USER_TABLE + (2 * i)] == username) then
+			user_table_entry = i;
+			user_table = USER_TABLE + (2 * i);
+			break;
+		endif;
+		i = i + 1;
+	endwhile;
+
+	//if entry does not exist :(
+	if(user_table_entry == -1) then
+		[ret] = -1;
+		[process_table + 9] = 0;
+		SP = userSP;
+		ireturn;
+	endif;
+
+	//encrypt passed unencrypted password
+	encrypted_pswd = unencrypted_pswd;
+	encrypt encrypted_pswd;
+
+	//check if encrypted password match input password, if not return -1 :(
+	if([user_table + 1] != encrypted_pswd) then
+		[ret] = -1;
+		[process_table + 9] = 0;
+		SP = userSP;
+		ireturn;
+	endif;
+
+	//set STATE of shell as CREATED in process table and USERID as that of user who is logging in
+	[PROCESS_TABLE + 36] = CREATED;
+	[PROCESS_TABLE + 35] = user_table_entry;	//userid
+	
+	//make login process sleep by setting its state to (WAIT_PROCESS,2), login process waits for shell to exit
+	[process_table + 4] = WAIT_PROCESS;
+	[process_table + 5] = 2;
+
+	//set current_userid as user_table_entry found above in system_status_table
+	[SYSTEM_STATUS_TABLE] = user_table_entry;
+
+	//call scheduler
+	backup;
+	call MOD_5;
+	restore;
+
+	//success :)
+	[process_table + 9] = 0;
+	[ret] = 0;
+	SP = userSP;
+	ireturn;
+endif;
+//----------------------------------------------------------------------
+
+//------------------------------------------------------------------------------------------------------------

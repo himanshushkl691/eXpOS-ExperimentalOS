@@ -1,11 +1,15 @@
 load --os $HOME/Desktop/myexpos/spl/spl_progs/final_os_startup.xsm
-load --init $HOME/Desktop/myexpos/expl/sample/shell_2.xsm
+load --init $HOME/Desktop/myexpos/expl/sample/login.xsm
+load --idle $HOME/Desktop/myexpos/expl/sample/idle.xsm
+load --shell $HOME/Desktop/myexpos/expl/sample/ExtShell.xsm
 load --exec $HOME/Desktop/myexpos/expl/sample/cat.xsm
 load --exec $HOME/Desktop/myexpos/expl/sample/ls.xsm
 load --exec $HOME/Desktop/myexpos/expl/sample/rm.xsm
 load --exec $HOME/Desktop/myexpos/expl/sample/cp.xsm
-load --exec $HOME/Desktop/myexpos/expl/sample/test6.xsm
-load --idle $HOME/Desktop/myexpos/expl/sample/idle.xsm
+load --exec $HOME/Desktop/myexpos/expl/sample/lu.xsm
+load --exec $HOME/Desktop/myexpos/expl/sample/ru.xsm
+load --exec $HOME/Desktop/myexpos/expl/sample/create.xsm
+load --exec $HOME/Desktop/myexpos/expl/sample/append.xsm
 load --exhandler $HOME/Desktop/myexpos/spl/spl_progs/exception_handler.xsm
 load --library $HOME/Desktop/myexpos/expl/library.lib
 load --int=timer $HOME/Desktop/myexpos/spl/spl_progs/timer_handler.xsm
@@ -19,9 +23,12 @@ load --int=8 $HOME/Desktop/myexpos/spl/spl_progs/int_8.xsm
 load --int=9 $HOME/Desktop/myexpos/spl/spl_progs/int_9.xsm
 load --int=10 $HOME/Desktop/myexpos/spl/spl_progs/int_10.xsm
 load --int=11 $HOME/Desktop/myexpos/spl/spl_progs/int_11.xsm
+load --int=12 $HOME/Desktop/myexpos/spl/spl_progs/int_12.xsm
 load --int=13 $HOME/Desktop/myexpos/spl/spl_progs/int_13.xsm
 load --int=14 $HOME/Desktop/myexpos/spl/spl_progs/int_14.xsm
 load --int=15 $HOME/Desktop/myexpos/spl/spl_progs/int_15.xsm
+load --int=16 $HOME/Desktop/myexpos/spl/spl_progs/int_16.xsm
+load --int=17 $HOME/Desktop/myexpos/spl/spl_progs/int_17.xsm
 load --module 0 $HOME/Desktop/myexpos/spl/spl_progs/module_0_stage15.xsm
 load --module 1 $HOME/Desktop/myexpos/spl/spl_progs/module_1.xsm
 load --module 2 $HOME/Desktop/myexpos/spl/spl_progs/module_2.xsm

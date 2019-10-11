@@ -1,0 +1,28 @@
+int main()
+{
+	decl
+		str username;
+		int ret,fd;
+		str filename,usr;
+	enddecl
+	begin
+		fd = exposcall("Open","root");
+		if((fd >= 0) AND (fd <= 7)) then
+			ret = exposcall("Seek",fd,0);
+			ret = exposcall("Read",fd,filename);
+			while(ret == 0) do
+				ret = exposcall("Seek",fd,2);
+				ret = exposcall("Read",fd,usr);
+				if((filename != "-1") AND (usr == username)) then
+					ret = exposcall("Delete",filename);
+				endif;
+				ret = exposcall("Seek",fd,4);
+				ret = exposcall("Read",fd,filename);
+			endwhile;
+			ret = exposcall("Close",fd);
+		else
+			write("Error");
+		endif;
+		return 0;
+	end
+}

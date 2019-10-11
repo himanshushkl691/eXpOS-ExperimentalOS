@@ -6,6 +6,6 @@ cd ..
 for i in $files
 do
 	./spl spl_progs/$i
-	echo "Done compiling $i..."
+	echo "Compiled $i"
 done
 cd $curr
