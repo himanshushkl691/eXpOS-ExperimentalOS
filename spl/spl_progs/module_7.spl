@@ -219,7 +219,7 @@ i = PROCESS_TABLE + 16;
 //pid
 [i + 1] = 1;
 //userid
-[i + 3] = 1;
+[i + 3] = 0;
 //status
 [i + 4] = CREATED;
 //user area page number
