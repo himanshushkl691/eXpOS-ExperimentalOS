@@ -1,0 +1,233 @@
+//-------------------------------------------------Pager Module-----------------------------------------------
+
+alias funcNum R1;
+alias currPID R2;
+
+//--------------------------Swap Out(1)(final)------------------------------
+if(funcNum == 1) then
+	backup;
+	print "swapout";
+	restore;
+
+	alias i R3;
+	alias non_swapped_process R4;
+	
+	//find non_swapped process in wait_process state
+	i = 3;
+	non_swapped_process = -1;
+	while(i < 16) do
+		alias process_table R5;
+		process_table = PROCESS_TABLE + (16 * i);
+		if(([process_table + 4] == WAIT_PROCESS) && ([process_table + 6] == 0)) then
+			non_swapped_process = i;
+			break;
+		endif;
+		i = i + 1;
+	endwhile;
+
+	//if there are no non-swapped processes in wait_process state
+	//find non-swapped process in wait_semaphore state
+	if(non_swapped_process == -1) then
+		i = 3;
+		while(i < 16) do
+			alias process_table R5;
+			process_table = PROCESS_TABLE + (16 * i);
+			if(([process_table + 4] == WAIT_SEMAPHORE) && ([process_table + 6] == 0)) then
+				non_swapped_process = i;
+				break;
+			endif;
+			i = i + 1;
+		endwhile;
+	endif;
+
+	//if no process with wait_process and wait_semaphore find non-running,allocated,terminated process with max TICK
+	if(non_swapped_process == -1) then
+		i = 3;
+		alias mx R5;
+		alias pid R6;
+		mx = -1;
+		pid = -1;
+		while(i < 16) do
+			alias process_table R7;
+			process_table = PROCESS_TABLE + (16 * i);
+			if(([process_table + 6] == 0) && ([process_table] > mx) && ([process_table + 4] != RUNNING) && ([process_table + 4] != TERMINATED) && ([process_table + 4] != ALLOCATED)) then
+				mx = [process_table];
+				pid = i;
+			endif;
+			i = i + 1;
+		endwhile;
+		non_swapped_process = pid;
+	endif;
+
+	//if no such non-swapped process exist set paging_status back to zero :O
+	if(non_swapped_process == -1) then
+		[SYSTEM_STATUS_TABLE + 5] = 0;
+		R0 = -1;
+		return;
+	endif;
+
+	alias non_swap_process_table R5;
+	alias non_swap_PTBR R6;
+	non_swap_process_table = PROCESS_TABLE + (non_swapped_process * 16);
+	non_swap_PTBR = PAGE_TABLE_BASE + (20 * non_swapped_process);
+
+	//set tick field of found process to 0, tick starts again after swap
+	[non_swap_process_table] = 0;
+
+	//invalidate and release valid heap, code, stack pages of process
+	alias page R7;
+	alias swap_block R8;
+	i = 4;
+	while(i < 20) do
+		page = [non_swap_PTBR + i];
+		if(page == -1) then
+			i = i + 2;
+			continue;
+		endif;
+
+		//heap pages(not shared) or stack pages to be swapped out
+		if(((i < 8) && ([MEMORY_FREE_LIST + page] == 1)) || (i > 15)) then
+			//get_swap_block() in memory manager
+			multipush(R0,R1,R2,R3,R4,R5,R6,R7,R8,R10,R11,R12,R13,R14,R15,BP);
+			R1 = GET_SWAP_BLOCK;
+			call MOD_2;
+			swap_block = R0;
+			multipop(R0,R1,R2,R3,R4,R5,R6,R7,R8,R10,R11,R12,R13,R14,R15,BP);
+			//disk_store() in device manager
+			backup;
+			R1 = DISK_STORE;
+			R2 = currPID;
+			R3 = page;
+			R4 = swap_block;
+			call MOD_4;
+			restore;
+			//update disk-map-table
+			[DISK_MAP_TABLE + (10 * non_swapped_process) + (i / 2)] = swap_block;
+		endif;
+
+		//release_page() in memory manager
+		backup;
+		R1 = RELEASE_PAGE;
+		R2 = page;
+		call MOD_2;
+		restore;
+
+		//invalidate page table entry
+		[non_swap_PTBR + i] = -1;
+		[non_swap_PTBR + i + 1] = "0000";
+		i = i + 2;
+	endwhile;
+
+	//set swap_flag field in process_table entry of non swapped process process to 1
+	[non_swap_process_table + 6] = 1;
+
+	//increment swap_count and reset the paging_status back to 0
+	[SYSTEM_STATUS_TABLE + 4] = [SYSTEM_STATUS_TABLE + 4] + 1;
+	[SYSTEM_STATUS_TABLE + 5] = 0;
+	return;
+endif;
+//--------------------------------------------------------------------------
+
+//--------------------------Swap In(2)(final)-------------------------------
+if(funcNum == 2) then
+	backup;
+	print "swapin";
+	restore;
+
+	alias i R3;
+	alias swapped_process R4;
+
+	//find swapped process in ready state with highest tick
+	alias mx R5;
+	alias pid R6;
+	i = 3;
+	swapped_process = -1;
+	mx = -1;
+	pid = -1;
+	while(i < 16) do
+		alias process_table R7;
+		process_table = PROCESS_TABLE + (i * 16);
+		if(([process_table] > mx) && ([process_table + 4] == READY)) then
+			mx = [process_table];
+			pid = i;
+		endif;
+		i = i + 1;
+	endwhile;
+	swapped_process = pid;
+
+	//no process in READY state reset paging_status field to 0 :(
+	if(swapped_process == -1) then
+		[SYSTEM_STATUS_TABLE + 5] = 0;
+		return;
+	endif;
+
+	alias swap_process_table R5;
+	alias swap_PTBR R6;
+	swap_process_table = PROCESS_TABLE + (16 * swapped_process);
+	swap_PTBR = PAGE_TABLE_BASE + (20 * swapped_process);
+	
+	//set tick field of found process to 0 in process table
+	[swap_process_table] = 0;
+
+	//move heap,stack pages back into memory
+	alias page R7;
+	alias block R8;
+	alias disk_map_table R9;
+	disk_map_table = DISK_MAP_TABLE + (10 * swapped_process);
+	i = 2;
+	while(i < 10) do
+		if((i >= 4) && (i <= 7)) then
+			//if code pages start from stack
+			i = i + 1;
+			continue;
+		endif;
+		block = [disk_map_table + i];
+		if(block == -1) then
+			i = i + 1;
+			continue;
+		endif;
+		
+		//get_free_page() in memory manager
+		multipush(R0,R1,R2,R3,R4,R5,R6,R8,R9,R10,R11,R12,R13,R14,R15,BP);
+		R1 = GET_FREE_PAGE;
+		call MOD_2;
+		page = R0;
+		multipop(R0,R1,R2,R3,R4,R5,R6,R8,R9,R10,R11,R12,R13,R14,R15,BP);
+
+		//disk_load() in device manager
+		backup;
+		R1 = DISK_LOAD;
+		R2 = [SYSTEM_STATUS_TABLE + 1];
+		R3 = page;
+		R4 = block;
+		call MOD_4; 
+		restore;
+
+		//free swap block by calling release_block() in memory manager
+		backup;
+		R1 = RELEASE_BLOCK;
+		R2 = block;
+		call MOD_2;
+		restore;
+		
+		//set page table entry corresponding to allocated page
+		[swap_PTBR + (2 * i)] = page;
+		[swap_PTBR + (2 * i) + 1] = "0110";
+		
+		//invalidate disk_map_table entry
+		[disk_map_table + i] = -1;		
+		i = i + 1;
+	endwhile;
+	
+	//set swap_flag to 0
+	[swap_process_table + 6] = 0;
+
+	//decrement swap_count and reset paging_status back to 0
+	[SYSTEM_STATUS_TABLE + 4] = [SYSTEM_STATUS_TABLE + 4] - 1;
+	[SYSTEM_STATUS_TABLE + 5] = 0;
+
+	return;
+endif;
+//--------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------------------------------------

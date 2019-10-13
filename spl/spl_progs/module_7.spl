@@ -1,3 +1,4 @@
+//--------------------------------------Boot Module-----------------------------------------
 //load library
 loadi(63,13);
 loadi(64,14);
@@ -85,6 +86,10 @@ loadi(47,60);
 loadi(48,61);
 loadi(49,62);
 
+//load MOD_6
+loadi(52,65);
+loadi(53,66);
+
 //load timer interrupt
 loadi(4,17);
 loadi(5,18);
@@ -117,7 +122,10 @@ alias cnt R1;
 //initialize state of {0..16}/{0,1,2} entries
 i = 0;
 while(i < 16) do
-	[PROCESS_TABLE+(i*16)+4] = TERMINATED;
+	alias temp R2;
+	temp = PROCESS_TABLE + (i * 16);
+	[temp] = 0;
+	[temp + 4] = TERMINATED;
 	i = i + 1;
 endwhile;
 
@@ -125,7 +133,7 @@ endwhile;
 i = 0;
 cnt = 0;
 while(i < 128) do
-	if(i < 81) then
+	if(i < 83) then
 		[MEMORY_FREE_LIST + i] = 1;
 	else
 		[MEMORY_FREE_LIST + i] = 0;
@@ -184,6 +192,10 @@ endwhile;
 
 //reset WAIT_MEM_COUNT
 [SYSTEM_STATUS_TABLE + 3] = 0;
+
+//init SWAPPED_COUNT and PAGING_STATUS to 0
+[SYSTEM_STATUS_TABLE + 4] = 0;
+[SYSTEM_STATUS_TABLE + 5] = 0;
 
 //disk is not busy
 [DISK_STATUS_TABLE] = 0;
@@ -300,3 +312,4 @@ endwhile;
 [DISK_MAP_TABLE + 25] = 68;
 breakpoint;
 return;
+//------------------------------------------------------------------------------------------

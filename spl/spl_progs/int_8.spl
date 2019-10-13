@@ -130,7 +130,7 @@ while(i < 16) do
 	temp = [parent_PTBR + i];
 	[child_PTBR + i] = temp;
 	[child_PTBR + i + 1] = [parent_PTBR + i + 1];
-	if(temp != -1) then
+	if((temp != -1) && (i > 3)) then
 		[MEMORY_FREE_LIST + temp] = [MEMORY_FREE_LIST + temp] + 1;
 	endif;
 	i = i + 2;

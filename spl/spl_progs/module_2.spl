@@ -80,15 +80,10 @@ endif;
 
 //-------------Get Code Page(final)---------------
 if(funcNum == GET_CODE_PAGE) then
-	//print "*********";
-	//print "=>PID.";
-	//print [SYSTEM_STATUS_TABLE + 1];
 	alias block_num R2;
 	alias i R3;
 	alias disk_entry R4;
 	i = 1;
-	//print "ReqBlock";
-	//print block_num;
 	while(i < 16) do
 		disk_entry = DISK_MAP_TABLE + (10 * i);
 		alias page R5;
@@ -106,10 +101,6 @@ if(funcNum == GET_CODE_PAGE) then
 	//if page is not in memory
 	R1 = GET_FREE_PAGE;
 	call MOD_2;
-	//print "RetPageNo.";
-	//print R0;
-	//print "***********";
-	//load(page_num,block_num)
 	R1 = DISK_LOAD;			//funcNum
 	R3 = R0;			//page number in which block_num content is loaded
 	R4 = block_num;			//block which we want to load
@@ -119,13 +110,56 @@ if(funcNum == GET_CODE_PAGE) then
 endif;
 //------------------------------------------------
 
-//-------------RELEASE BLOCK(final)---------------
+//-----------Get Free Block(final)----------------
+if(funcNum == GET_FREE_BLOCK) then
+	alias i R3;
+	
+	//search through disk_free_list for free user blocks, not allocated to OS or swap area
+	i = DISK_FREE_AREA;
+	while(i < DISK_SWAP_AREA) do
+		if([DISK_FREE_LIST + i] == 0) then
+			//found :)
+			[DISK_FREE_LIST + i] = 1;
+			R0 = i;
+			return;
+		endif;
+		i = i + 1;
+	endwhile;
+
+	//not found :(
+	R0 = -1;
+	return;
+endif;
+//------------------------------------------------
+
+//---------------Get Swap Block(final)----------------
+if(funcNum == GET_SWAP_BLOCK) then
+	alias i R3;
+	//search in swap area in disk_free_list from DISK_SWAP_AREA to (DISK_SIZE - 1) /*swap area*/
+	i = DISK_SWAP_AREA;
+	while(i < DISK_SIZE) do
+		if([DISK_FREE_LIST + i] == 0) then
+			//free swap_block found :)
+			[DISK_FREE_LIST + i] = 1;
+			R0 = i;
+			return;
+		endif;
+		i = i + 1;
+	endwhile;
+	
+	//not found <:-(
+	R0 = -1;
+	return;
+endif;
+//----------------------------------------------------
+
+//----------------Release Block(final)----------------
 if(funcNum == RELEASE_BLOCK) then
 	alias block_num R2;
 	[DISK_FREE_LIST + block_num] = [DISK_FREE_LIST + block_num] - 1;
 	return;
 endif;
-//------------------------------------------------
+//----------------------------------------------------
 
 return;
 //---------------------------------------------------------------

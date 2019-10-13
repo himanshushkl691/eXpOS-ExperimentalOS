@@ -6,6 +6,8 @@ int main()
 		str filename,usr;
 	enddecl
 	begin
+		write("Username");
+		ret = exposcall("Read",-1,username);
 		fd = exposcall("Open","root");
 		if((fd >= 0) AND (fd <= 7)) then
 			ret = exposcall("Seek",fd,0);

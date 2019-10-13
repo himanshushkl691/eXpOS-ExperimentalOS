@@ -1,13 +1,72 @@
+//--------------------------------------------Timer Interrupt Handler-------------------------------------------------
+
 //save user stack pointer
 [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 13] = SP;
 SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 11] * 512 - 1;
 
 //save context
 backup;
+alias i R0;
+
+//0 -> swapping not ongoing
+//1 -> SWAP_OUT
+//2 -> SWAP_IN
+
+//swapping is ongoing or not
+if([SYSTEM_STATUS_TABLE + 5] != 0) then
+
+	//swapping is on now
+	//Call Swap In/Out, if necessary
+	
+	if([SYSTEM_STATUS_TABLE + 1] == 15) then
+		//current process is swapper_daemon
+		//paging_status is SWAP_OUT
+		if([SYSTEM_STATUS_TABLE + 5] == SWAP_OUT) then
+			//swap_out() in pager module
+			backup;
+			R1 = SWAP_OUT;
+			R2 = [SYSTEM_STATUS_TABLE + 1];
+			call MOD_6;
+			restore;
+		endif;
+		
+		//paging_status is SWAP_IN
+		if([SYSTEM_STATUS_TABLE + 5] == SWAP_IN) then
+			//swap_in() in pager module
+			backup;
+			R1 = SWAP_IN;
+			R2 = [SYSTEM_STATUS_TABLE + 1];
+			call MOD_6;
+			restore;
+		endif;
+	endif;
+else
+	//swapping is not on now, check whether it must be initiated
+	if([SYSTEM_STATUS_TABLE + 2] < MEM_LOW) then
+		//set paging_status to SWAP_OUT so that swap_out() is invoked in next timer interrupt
+		[SYSTEM_STATUS_TABLE + 5] = SWAP_OUT;
+	else
+		//swapped out processes are there
+		if([SYSTEM_STATUS_TABLE + 4] != 0) then
+			//check tick of swapped out process if greater than MEM_TICK or mem_free_count > MEM_HIGH
+			//set paging status to SWAP_IN for next timer interrupt
+			i = 0;
+			while(i < 16) do
+				alias process_table R1;
+				process_table = PROCESS_TABLE + (16 * i);
+				if((([process_table + 6] == 1) && ([process_table] > MAX_TICK)) || ([SYSTEM_STATUS_TABLE + 2] > MEM_HIGH)) then
+					[SYSTEM_STATUS_TABLE + 5] = SWAP_IN;
+					break;
+				endif;
+				i = i + 1;
+			endwhile;
+		endif;
+	endif;
+endif;
 
 //set state of current process to ready from running
-[PROCESS_TABLE+([SYSTEM_STATUS_TABLE+1]*16)+4]=READY;
-alias i R0;
+[PROCESS_TABLE + (16 * [SYSTEM_STATUS_TABLE + 1]) + 4] = READY;
+
 i = 0;
 //tracks how long process is in memory/swap
 while(i<16) do
@@ -16,11 +75,15 @@ while(i<16) do
 	endif;
 	i=i+1;
 endwhile;
+
 //call scheduler
 call MOD_5;
 
 restore;
+
+//set SP to user stack of scheduled process
 SP = [PROCESS_TABLE+([SYSTEM_STATUS_TABLE+1]*16)+13];
 [PROCESS_TABLE+([SYSTEM_STATUS_TABLE+1]*16)+9] = 0;
 
 ireturn;
+//--------------------------------------------------------------------------------------------------------------------
