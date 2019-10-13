@@ -125,6 +125,7 @@ while(i < 16) do
 	alias temp R2;
 	temp = PROCESS_TABLE + (i * 16);
 	[temp] = 0;
+	[temp + 6] = 0;
 	[temp + 4] = TERMINATED;
 	i = i + 1;
 endwhile;

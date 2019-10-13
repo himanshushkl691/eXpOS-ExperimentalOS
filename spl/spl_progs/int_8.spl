@@ -3,6 +3,8 @@
 //------------Fork System Call(8)(final)--------------
 [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 9] = 8;		//change mode_flag to fork_sys_call
 [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 13] = SP;		//save userSP of parent process
+alias ret R15;
+ret = [PTBR + 2 * ((SP - 1) / 512)] * 512 + (SP - 1) % 512;
 SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] * 512 - 1;	//user area page
 
 //Allocate memory and set Process_Table
@@ -13,11 +15,7 @@ call MOD_1;
 if(R0 == -1) then
 	[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 9] = 0;
 	SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 13];
-	multipush(R0);
-	alias userSP R0;
-	userSP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 13];
-	[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + ((userSP - 1) % 512)] = -1;
-	multipop(R0);
+	[ret] = -1;
 	ireturn;
 endif;
 

@@ -11,13 +11,11 @@ process_table_entry = PROCESS_TABLE + 16 * reqPID;
 
 [process_table_entry + 8] = P0;
 
-//backup;
-multipush(R0,R1,R2,R3,R4,R5,R6);
+backup;
 R1 = 9;
 R2 = reqPID;
 call MOD_0;
-multipop(R0,R1,R2,R3,R4,R5,R6);
-//restore;
+restore;
 
 restore;
 

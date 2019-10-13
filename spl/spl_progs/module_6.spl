@@ -4,18 +4,14 @@ alias funcNum R1;
 alias currPID R2;
 
 //--------------------------Swap Out(1)(final)------------------------------
-if(funcNum == 1) then
-	backup;
-	print "swapout";
-	restore;
-
+if(funcNum == SWAP_OUT) then
 	alias i R3;
 	alias non_swapped_process R4;
 	
 	//find non_swapped process in wait_process state
 	i = 3;
 	non_swapped_process = -1;
-	while(i < 16) do
+	while(i < 15) do
 		alias process_table R5;
 		process_table = PROCESS_TABLE + (16 * i);
 		if(([process_table + 4] == WAIT_PROCESS) && ([process_table + 6] == 0)) then
@@ -29,7 +25,7 @@ if(funcNum == 1) then
 	//find non-swapped process in wait_semaphore state
 	if(non_swapped_process == -1) then
 		i = 3;
-		while(i < 16) do
+		while(i < 15) do
 			alias process_table R5;
 			process_table = PROCESS_TABLE + (16 * i);
 			if(([process_table + 4] == WAIT_SEMAPHORE) && ([process_table + 6] == 0)) then
@@ -45,12 +41,12 @@ if(funcNum == 1) then
 		i = 3;
 		alias mx R5;
 		alias pid R6;
-		mx = -1;
+		mx = 0;
 		pid = -1;
-		while(i < 16) do
+		while(i < 15) do
 			alias process_table R7;
 			process_table = PROCESS_TABLE + (16 * i);
-			if(([process_table + 6] == 0) && ([process_table] > mx) && ([process_table + 4] != RUNNING) && ([process_table + 4] != TERMINATED) && ([process_table + 4] != ALLOCATED)) then
+			if(([process_table + 6] == 0) && ([process_table] > mx) && (([process_table + 4] != RUNNING) && ([process_table + 4] != TERMINATED) && ([process_table + 4] != ALLOCATED))) then
 				mx = [process_table];
 				pid = i;
 			endif;
@@ -124,16 +120,13 @@ if(funcNum == 1) then
 	//increment swap_count and reset the paging_status back to 0
 	[SYSTEM_STATUS_TABLE + 4] = [SYSTEM_STATUS_TABLE + 4] + 1;
 	[SYSTEM_STATUS_TABLE + 5] = 0;
+	
 	return;
 endif;
 //--------------------------------------------------------------------------
 
 //--------------------------Swap In(2)(final)-------------------------------
-if(funcNum == 2) then
-	backup;
-	print "swapin";
-	restore;
-
+if(funcNum == SWAP_IN) then
 	alias i R3;
 	alias swapped_process R4;
 
@@ -142,12 +135,12 @@ if(funcNum == 2) then
 	alias pid R6;
 	i = 3;
 	swapped_process = -1;
-	mx = -1;
+	mx = 0;
 	pid = -1;
-	while(i < 16) do
+	while(i < 15) do
 		alias process_table R7;
 		process_table = PROCESS_TABLE + (i * 16);
-		if(([process_table] > mx) && ([process_table + 4] == READY)) then
+		if(([process_table] > mx) && ([process_table + 4] == READY) && ([process_table + 6]==1)) then
 			mx = [process_table];
 			pid = i;
 		endif;

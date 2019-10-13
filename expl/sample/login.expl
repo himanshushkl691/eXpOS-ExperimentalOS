@@ -10,9 +10,7 @@ int main()
 			ret = exposcall("Read",-1,username);
 			write("Password");
 			ret = exposcall("Read",-1,password);
-			breakpoint;
 			ret = exposcall("Login",username,password);
-			breakpoint;
 			if(ret == -1) then
 				write("InvUser");
 			endif;
