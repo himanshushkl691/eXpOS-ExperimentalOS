@@ -61,6 +61,7 @@ if(sys_call_num == 17) then
 	
 	//store index of semaphore table entry in per-process resource table entry
 	[userAreaPage * 512 + freeEntry + 1] = newSemaphore;
+	[userAreaPage * 512 + freeEntry] = SEMAPHORE;
 	
 	SP = userSP;
 	[PROCESS_TABLE + (currPID * 16) + 9] = 0;

@@ -23,7 +23,7 @@ if([SYSTEM_STATUS_TABLE + 5] != 0) then
 	//paging on
 	alias swapperPT R4;
 	swapperPT = PROCESS_TABLE + (15 * 16);
-	if(([swapperPT + 4] != RUNNING) && ([swapperPT + 4] != READY) && ([swapperPT + 4] != CREATED)) then
+	if(([swapperPT + 4] != READY) && ([swapperPT + 4] != RUNNING) && ([swapperPT + 4] != CREATED)) then
 		newPID = 0;
 	else
 		newPID = 15;

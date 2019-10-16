@@ -9,6 +9,7 @@ R1 = EXIT_PROCESS;
 R2 = [SYSTEM_STATUS_TABLE + 1];
 call MOD_1;
 restore;
+	
 call MOD_5;
 //----------------------------------------------------
 

@@ -9,6 +9,7 @@ enddecl
 
 begin
     pid=exposcall("Getpid");
+write(pid);
     if(pid==3) then
         filename="3.dat";
     endif;

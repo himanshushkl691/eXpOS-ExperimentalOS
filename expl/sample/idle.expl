@@ -6,6 +6,7 @@ enddecl
 begin
 	a = 1;
 	while (1 == 1) do
+		breakpoint;
 		a = 1;
 	endwhile;
 	return 0;

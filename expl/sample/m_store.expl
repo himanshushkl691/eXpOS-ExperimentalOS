@@ -86,6 +86,7 @@ begin
 
   write("Stored");
 
+  write("Sorting");
   pid=exposcall("Fork");
   if(pid!=0) then
     while(pid<13) do

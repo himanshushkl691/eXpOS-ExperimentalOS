@@ -11,7 +11,7 @@ if(funcNum == SWAP_OUT) then
 	//find non_swapped process in wait_process state
 	i = 3;
 	non_swapped_process = -1;
-	while(i < 15) do
+	while(i < 16) do
 		alias process_table R5;
 		process_table = PROCESS_TABLE + (16 * i);
 		if(([process_table + 4] == WAIT_PROCESS) && ([process_table + 6] == 0)) then
@@ -25,7 +25,7 @@ if(funcNum == SWAP_OUT) then
 	//find non-swapped process in wait_semaphore state
 	if(non_swapped_process == -1) then
 		i = 3;
-		while(i < 15) do
+		while(i < 16) do
 			alias process_table R5;
 			process_table = PROCESS_TABLE + (16 * i);
 			if(([process_table + 4] == WAIT_SEMAPHORE) && ([process_table + 6] == 0)) then
@@ -43,7 +43,7 @@ if(funcNum == SWAP_OUT) then
 		alias pid R6;
 		mx = 0;
 		pid = -1;
-		while(i < 15) do
+		while(i < 16) do
 			alias process_table R7;
 			process_table = PROCESS_TABLE + (16 * i);
 			if(([process_table + 6] == 0) && ([process_table] > mx) && (([process_table + 4] != RUNNING) && ([process_table + 4] != TERMINATED) && ([process_table + 4] != ALLOCATED))) then
@@ -84,11 +84,11 @@ if(funcNum == SWAP_OUT) then
 		//heap pages(not shared) or stack pages to be swapped out
 		if(((i < 8) && ([MEMORY_FREE_LIST + page] == 1)) || (i > 15)) then
 			//get_swap_block() in memory manager
-			multipush(R0,R1,R2,R3,R4,R5,R6,R7,R8,R10,R11,R12,R13,R14,R15,BP);
+			multipush(R0,R1,R2,R3,R4,R5,R6,R7,R9,R10,R11,R12,R13,R14,R15,BP);
 			R1 = GET_SWAP_BLOCK;
 			call MOD_2;
 			swap_block = R0;
-			multipop(R0,R1,R2,R3,R4,R5,R6,R7,R8,R10,R11,R12,R13,R14,R15,BP);
+			multipop(R0,R1,R2,R3,R4,R5,R6,R7,R9,R10,R11,R12,R13,R14,R15,BP);
 			//disk_store() in device manager
 			backup;
 			R1 = DISK_STORE;
@@ -137,10 +137,10 @@ if(funcNum == SWAP_IN) then
 	swapped_process = -1;
 	mx = 0;
 	pid = -1;
-	while(i < 15) do
+	while(i < 16) do
 		alias process_table R7;
 		process_table = PROCESS_TABLE + (i * 16);
-		if(([process_table] > mx) && ([process_table + 4] == READY) && ([process_table + 6]==1)) then
+		if(([process_table] > mx) && ([process_table + 6]==1)) then
 			mx = [process_table];
 			pid = i;
 		endif;
@@ -151,6 +151,7 @@ if(funcNum == SWAP_IN) then
 	//no process in READY state reset paging_status field to 0 :(
 	if(swapped_process == -1) then
 		[SYSTEM_STATUS_TABLE + 5] = 0;
+		R0 = -1;
 		return;
 	endif;
 

@@ -25,7 +25,9 @@ begin
         pid=exposcall("Fork");
         pid=exposcall("Fork");
         pid=exposcall("Fork");
+	breakpoint;
         temp = exposcall("Exec","pgm1.xsm");
+	breakpoint;
     else
         temp=exposcall("Write",-2, "OPEN FAIL");
     endif;

@@ -25,6 +25,7 @@ begin
   if(pid!=0) then
     x=exposcall("Wait", pid);
   else
+	write("Storing");
     x=exposcall("Exec", "m_store.xsm");
   endif;
 
