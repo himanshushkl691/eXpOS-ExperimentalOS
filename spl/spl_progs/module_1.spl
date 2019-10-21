@@ -60,7 +60,7 @@ if(funcNum == FREE_USER_AREA_PAGE) then
 	
 	//for every valid semaphore entry invoke release_semaphore()
 	i = 0;
-	while(i < 8) do
+	while(i < 16) do
 		if([userAreaPageNum * 512 + i + 496] == SEMAPHORE) then
 			backup;
 			R1 = RELEASE_SEMAPHORE;
