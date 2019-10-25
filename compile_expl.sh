@@ -6,6 +6,6 @@ cd ..
 for i in $files
 do
 	./expl sample/$i
-	echo "Done compiling $i..."
+	echo "Compiled $i..."
 done
 cd $curr

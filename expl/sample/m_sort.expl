@@ -154,6 +154,12 @@ int main()
       p=p.next;
     endwhile;
 
+	pid = exposcall("Getpid");
+	x = pid + 1;
+	while(x < 13) do	
+		a = exposcall("Wait",x);
+		x = x + 1;
+	endwhile;
     x=exposcall("Close", fp);
     x=exposcall("Semrelease");
     return 1;
