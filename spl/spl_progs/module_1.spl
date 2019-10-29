@@ -68,6 +68,7 @@ if(funcNum == FREE_USER_AREA_PAGE) then
 			R3 = [userAreaPageNum * 512 + 496 + i + 1];	//semid
 			call MOD_0;
 			restore;
+			[userAreaPageNum * 512 + i + 496] = -1;
 		endif;
 		if([userAreaPageNum * 512 + i + 496] == FILE) then
 			backup;
@@ -75,6 +76,7 @@ if(funcNum == FREE_USER_AREA_PAGE) then
 			R2 = [userAreaPageNum * 512 + 496 + i + 1];	//open_file_table_index
 			call MOD_3; 
 			restore;
+			[userAreaPageNum * 512 + i + 496] = -1;
 		endif;
 		i = i + 2;
 	endwhile;
