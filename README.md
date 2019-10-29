@@ -6,7 +6,7 @@ eXpOS provides user a Command Shell as an interface between user and OS system c
 1. Download the eXpOS.
 2. Rename extracted folder to myexpos.
 3. Cut and paste it to Desktop.
-4. Open Terminal (Ctrl + Alt + T or using GUI).
+4. Open Terminal (Ctrl+Alt+T or using GUI).
 5. Type cd $HOME/Desktop/myexpos and press Enter.
 6. Run following bash files in order type these on command line.
 7. bash compile_expl.sh
