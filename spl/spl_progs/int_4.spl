@@ -166,13 +166,13 @@ if(sys_call_num == 4) then
 			buffer = BUFFER_TABLE + (4 * ([inode_idx + i] % MAX_BUFFER));
 			if(([buffer] == [inode_idx + i]) && ([buffer + 1] == 1)) then
 				[buffer + 1] = 0;	//reset dirty bit
-				backup;
-				R1 = 4;			//release block
-				R3 = currPID;		//current PID
-				R2 = [inode_idx + i];	//block number
-				call MOD_2;
-				restore;
 			endif;
+			backup;
+			R1 = 4;			//release block
+			R3 = currPID;		//current PID
+			R2 = [inode_idx + i];	//block number
+			call MOD_2;
+			restore;
 		endif;
 		i = i + 1;
 	endwhile;
