@@ -91,17 +91,17 @@ if(funcNum == RELEASE_SEMAPHORE) then
 	if([SEMAPHORE_TABLE + (4 * semid)] == currPID) then
 		//set Locking_PID to -1
 		[SEMAPHORE_TABLE + (4 * semid)] = -1;
+		i = 0;
+		while(i < 16) do
+			if(([PROCESS_TABLE + (i * 16) + 4] == WAIT_SEMAPHORE) && ([PROCESS_TABLE + (i * 16) + 5] == semid)) then
+				[PROCESS_TABLE + (i * 16) + 4] = READY;
+			endif;
+			i = i + 1;
+		endwhile;
 		R0 = 0;
 	else
 		R0 = -1;
 	endif;
-	i = 0;
-	while(i < 16) do
-		if(([PROCESS_TABLE + (i * 16) + 4] == WAIT_SEMAPHORE) && ([PROCESS_TABLE + (i * 16) + 5] == semid)) then
-			[PROCESS_TABLE + (i * 16) + 4] = READY;
-		endif;
-		i = i + 1;
-	endwhile;
 	//decrement process_count of semaphore in semaphore table,if process_count is 0 semaphore is free
 	[SEMAPHORE_TABLE + (semid * 4) + 1] = [SEMAPHORE_TABLE + (semid * 4) + 1] - 1;
 	return;

@@ -62,15 +62,7 @@ if (funcNum == DISK_LOAD) then
 	[DISK_STATUS_TABLE + 1] = 0;	//0-->load operation
 	[DISK_STATUS_TABLE + 2] = page_number;	//set page number
 	[DISK_STATUS_TABLE + 3] = block_number;	//set block number
-	//backup;
-	//print "lo:)";
-	//print page_number;
-	//print [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9];
-	//print EPN;
-	//print EC;
 	load(page_number,block_number);
-	//print ":(";
-	//restore;
 	[PROCESS_TABLE + (currPID*16) + 4] = WAIT_DISK;
 	backup;
 	call MOD_5;
@@ -91,14 +83,7 @@ if(funcNum == DISK_STORE) then
 	[DISK_STATUS_TABLE + 1] = 1;		//1 --> STORE OPERATION	
 	[DISK_STATUS_TABLE + 2] = page_number;	//set page number
 	[DISK_STATUS_TABLE + 3] = block_number;	//set block number
-	//backup;
-	//print "sto:)";
-	//print [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9];
-	//print EPN;
-	//print EC;
 	store(page_number,block_number);
-	//print ":(";
-	//restore;
 	[PROCESS_TABLE + (currPID*16) + 4] = WAIT_DISK;
 	backup;
 	call MOD_5;

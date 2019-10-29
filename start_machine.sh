@@ -1,10 +1,20 @@
 #!/bin/bash
 curr=$(pwd)
 cd $HOME/Desktop/myexpos/xsm
-if [ -z $1 ]
+if [ -z $2 ]
 then
-	./xsm
+	if [ -z $1 ]
+	then
+		./xsm
+	else
+		./xsm --timer $1
+	fi
 else
-	./xsm --timer $1
+	if [ -z $1 ]
+	then
+		./xsm --debug
+	else
+		./xsm --debug --timer $1
+	fi
 fi
 cd $curr

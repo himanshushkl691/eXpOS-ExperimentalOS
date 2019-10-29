@@ -13,6 +13,6 @@ eXpOS provides user a Command Shell as an interface between user and OS system c
 8. bash compile_spl.sh
 9. bash format.sh
 10. bash load.sh
-11. bash start_machine.sh
+11. bash start_machine.sh timer_value debug_on/debug_off
 12. eXpOS starts.
 13. You can type commands to check OS.

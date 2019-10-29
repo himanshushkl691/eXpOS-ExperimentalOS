@@ -99,18 +99,28 @@ if(funcNum == SWAP_OUT) then
 			restore;
 			//update disk-map-table
 			[DISK_MAP_TABLE + (10 * non_swapped_process) + (i / 2)] = swap_block;
+			backup;
+			R1 = RELEASE_PAGE;
+			R2 = page;
+			call MOD_2;
+			restore;
+			//invalidate page table entry
+			[non_swap_PTBR + i] = -1;
+			[non_swap_PTBR + i + 1] = "0000";
 		endif;
 
 		//release_page() in memory manager
-		backup;
-		R1 = RELEASE_PAGE;
-		R2 = page;
-		call MOD_2;
-		restore;
+		if(i>=8 && i<=15) then
+			backup;
+			R1 = RELEASE_PAGE;
+			R2 = page;
+			call MOD_2;
+			restore;
+			//invalidate page table entry
+			[non_swap_PTBR + i] = -1;
+			[non_swap_PTBR + i + 1] = "0000";
+		endif;
 
-		//invalidate page table entry
-		[non_swap_PTBR + i] = -1;
-		[non_swap_PTBR + i + 1] = "0000";
 		i = i + 2;
 	endwhile;
 
