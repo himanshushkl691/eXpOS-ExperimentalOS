@@ -62,7 +62,7 @@ if(funcNum == GET_CODE_PAGE) then
 	alias i R3;
 	alias disk_entry R4;
 	i = 1;
-	while(i < 16) do
+	while(i < 14) do
 		disk_entry = DISK_MAP_TABLE + (10 * i);
 		alias page R5;
 		page = 4;

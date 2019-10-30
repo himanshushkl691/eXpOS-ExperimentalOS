@@ -199,13 +199,19 @@ if(funcNum == SWAP_IN) then
 		multipop(R0,R1,R2,R3,R4,R5,R6,R8,R9,R10,R11,R12,R13,R14,R15,BP);
 
 		//disk_load() in device manager
-		backup;
-		R1 = DISK_LOAD;
-		R2 = [SYSTEM_STATUS_TABLE + 1];
-		R3 = page;
-		R4 = block;
-		call MOD_4; 
-		restore;
+		if(page != -1) then
+			backup;
+			R1 = DISK_LOAD;
+			R2 = [SYSTEM_STATUS_TABLE + 1];
+			R3 = page;
+			R4 = block;
+			call MOD_4; 
+			restore;
+		else
+			backup;
+			print "MEMERR";
+			restore;
+		endif;
 
 		//free swap block by calling release_block() in memory manager
 		backup;
@@ -219,7 +225,7 @@ if(funcNum == SWAP_IN) then
 		[swap_PTBR + (2 * i) + 1] = "0110";
 		
 		//invalidate disk_map_table entry
-		[disk_map_table + i] = -1;		
+		[disk_map_table + i] = -1;
 		i = i + 1;
 	endwhile;
 	

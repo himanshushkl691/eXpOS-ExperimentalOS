@@ -24,7 +24,7 @@ if(funcNum == KILL_ALL) then
 	//exit_process() for (i != currpid) and init and idle
 	i = 2;
 	while(i < MAX_PROC_NUM) do
-		if(([PROCESS_TABLE + (i * 16) + 4] != TERMINATED) && (i != currPID)) then
+		if((i != 15) && ([PROCESS_TABLE + (i * 16) + 4] != TERMINATED) && (i != currPID)) then
 			backup;
 			R1 = EXIT_PROCESS;
 			R2 = i;
@@ -60,7 +60,7 @@ if(funcNum == FREE_USER_AREA_PAGE) then
 	
 	//for every valid semaphore entry invoke release_semaphore()
 	i = 0;
-	while(i < 8) do
+	while(i < 14) do
 		if([userAreaPageNum * 512 + i + 496] == SEMAPHORE) then
 			backup;
 			R1 = RELEASE_SEMAPHORE;
