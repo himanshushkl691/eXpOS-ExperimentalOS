@@ -1,7 +1,6 @@
 # eXpOS-ExperimentalOS
 A toy Operating System build from scratch using basic Operating System concepts.
-Project is done under Operating System Lab Course.
-eXpOS provides user a Command Shell as an interface between user and OS system calls.
+Project is done under Operating System Lab Course.eXpOS provides user a Command Shell as an interface between user and OS system calls.
 # To run this Operating system (only on Linux):
 1. Download the eXpOS.
 2. Rename extracted folder to myexpos.
@@ -16,3 +15,4 @@ eXpOS provides user a Command Shell as an interface between user and OS system c
 11. bash start_machine.sh timer_value debug_on/debug_off
 12. eXpOS starts.
 13. You can type commands to check OS.
+More information at https://exposnitc.github.io/
