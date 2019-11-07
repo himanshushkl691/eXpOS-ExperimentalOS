@@ -11,7 +11,7 @@ load --exec $HOME/Desktop/myexpos/expl/sample/ru.xsm
 load --exec $HOME/Desktop/myexpos/expl/sample/m_store.xsm
 load --exec $HOME/Desktop/myexpos/expl/sample/merge.xsm
 load --exec $HOME/Desktop/myexpos/expl/sample/m_sort.xsm
-load --exec $HOME/Desktop/myexpos/expl/sample/conMS.xsm
+load --exec $HOME/Desktop/myexpos/expl/sample/m_merge.xsm
 load --exhandler $HOME/Desktop/myexpos/spl/spl_progs/exception_handler.xsm
 load --library $HOME/Desktop/myexpos/expl/library.lib
 load --int=timer $HOME/Desktop/myexpos/spl/spl_progs/timer_handler.xsm

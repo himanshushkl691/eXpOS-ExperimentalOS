@@ -60,7 +60,7 @@ if(funcNum == FREE_USER_AREA_PAGE) then
 	
 	//for every valid semaphore entry invoke release_semaphore()
 	i = 0;
-	while(i < 14) do
+	while(i < 16) do
 		if([userAreaPageNum * 512 + i + 496] == SEMAPHORE) then
 			backup;
 			R1 = RELEASE_SEMAPHORE;
@@ -136,11 +136,12 @@ endif;
 if(funcNum == FREE_PAGE_TABLE) then
 	alias temp R4;
 	alias disk_entry R5;
-	PTBR = PAGE_TABLE_BASE + currPID * 20;
-	[PTBR + 0] = -1;
-	[PTBR + 1] = "0000";
-	[PTBR + 2] = -1;
-	[PTBR + 3] = "0000";
+	alias ptbr R6;
+	ptbr = PAGE_TABLE_BASE + currPID * 20;
+	[ptbr + 0] = -1;
+	[ptbr + 1] = "0000";
+	[ptbr + 2] = -1;
+	[ptbr + 3] = "0000";
 	disk_entry = (currPID * 10) + DISK_MAP_TABLE;
 	temp = 0;
 	while(temp < 10) do
@@ -156,14 +157,14 @@ if(funcNum == FREE_PAGE_TABLE) then
 	endwhile;
 	temp = 4;
 	while(temp < 20) do
-		if([PTBR + temp] != -1) then
+		if([ptbr + temp] != -1) then
 			backup;
 			R1 = RELEASE_PAGE;
-			R2 = [PTBR + temp];
+			R2 = [ptbr + temp];
 			call MOD_2;
 			restore;
-			[PTBR + temp] = -1;
-			[PTBR + temp + 1] = "0000";
+			[ptbr + temp] = -1;
+			[ptbr + temp + 1] = "0000";
 		endif;
 		temp = temp + 2;
 	endwhile;

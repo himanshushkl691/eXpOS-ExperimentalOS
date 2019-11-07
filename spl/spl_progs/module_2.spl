@@ -4,6 +4,7 @@ alias pageNum R2;
 
 //----------Get Free Page(Final Version)----------
 if(funcNum == GET_FREE_PAGE) then
+	label:
 	//increment wait_mem_count
 	[SYSTEM_STATUS_TABLE + 3] = [SYSTEM_STATUS_TABLE + 3] + 1;
 	//wait for memory
@@ -19,23 +20,22 @@ if(funcNum == GET_FREE_PAGE) then
 	//MEM_FREE_COUNT
 	[SYSTEM_STATUS_TABLE + 2] = [SYSTEM_STATUS_TABLE + 2] - 1;
 
-	alias i R3;
+	alias i R0;
 	i = 76;
-	while(i < MAX_MEM_PAGE) do
+	while(i < 128) do
 		if([MEMORY_FREE_LIST + i] == 0) then
 			[MEMORY_FREE_LIST + i] = 1;
-			break;
+			return;
 		endif;
 		i = i + 1;
 	endwhile;
-	//return free page_number
-	R0 = i;
-	return;
+	goto label;
 endif;
 //------------------------------------------------
 
 //----------Release Page(Final Version)-----------
 if(funcNum == RELEASE_PAGE) then
+	backup;
 	[MEMORY_FREE_LIST + pageNum] = [MEMORY_FREE_LIST + pageNum] - 1;
 	//if mem_free_list+page_num becomes zero increment mem_free_count
 	
@@ -52,6 +52,7 @@ if(funcNum == RELEASE_PAGE) then
 			i = i + 1;
 		endwhile;
 	endif;
+	restore;
 	return;
 endif;
 //------------------------------------------------
@@ -61,8 +62,8 @@ if(funcNum == GET_CODE_PAGE) then
 	alias block_num R2;
 	alias i R3;
 	alias disk_entry R4;
-	i = 1;
-	while(i < 14) do
+	i = 0;
+	while(i < 16) do
 		disk_entry = DISK_MAP_TABLE + (10 * i);
 		alias page R5;
 		page = 4;
@@ -77,6 +78,7 @@ if(funcNum == GET_CODE_PAGE) then
 		i = i + 1;
 	endwhile;
 	//if page is not in memory
+	multipush(R1,R2,R3,R4,R5,R6,R7,R8,R9,R10,R11,R12,R13,R14,R15,BP);
 	R1 = GET_FREE_PAGE;
 	call MOD_2;
 	R1 = DISK_LOAD;			//funcNum
@@ -84,6 +86,7 @@ if(funcNum == GET_CODE_PAGE) then
 	R4 = block_num;			//block which we want to load
 	R2 = [SYSTEM_STATUS_TABLE + 1];	//pid
 	call MOD_4;			//device manager
+	multipop(R1,R2,R3,R4,R5,R6,R7,R8,R9,R10,R11,R12,R13,R14,R15,BP);
 	return;
 endif;
 //------------------------------------------------
